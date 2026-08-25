@@ -5,7 +5,7 @@
 <%- include('partials/nav') %>
 
 <% if (movie.detailImageUrl) { %>
-  <div class="detail-hero" style="background-image: url('<%= movie.detailImageUrl %>');"></div>
+  <img class="detail-hero" src="<%= movie.detailImageUrl %>" alt="<%= movie.title %> 상세 이미지" />
 <% } %>
 
 <div class="detail-info">

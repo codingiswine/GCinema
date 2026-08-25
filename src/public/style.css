@@ -255,12 +255,11 @@ button:hover { background: #444; }
 .showtime-seats { font-size: 0.78rem; color: #888; }
 
 .detail-hero {
+  display: block;
   width: 100%;
-  aspect-ratio: 16 / 9;
-  background-size: cover;
-  background-position: center;
+  max-width: 360px;
+  margin: 0 auto 16px;
   border-radius: 10px;
-  margin-bottom: 16px;
 }
 .detail-info { display: flex; flex-direction: column; gap: 10px; }
 .detail-title-row { display: flex; align-items: center; gap: 10px; }
