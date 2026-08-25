@@ -3,80 +3,109 @@
 <%- include('partials/head') %>
 <body>
 <%- include('partials/nav') %>
-<h1><%= showtime.movie.title %></h1>
-<p><%= showtime.theaterName %> · <%= new Date(showtime.startAt).toLocaleString('ko-KR') %></p>
-<p id="bookError" class="error" style="display:none;"></p>
 
-<div class="ticket-panel">
-  <div class="ticket-panel-header">
-    <h2>관람인원선택</h2>
-    <button type="button" id="resetBtn" class="btn-secondary">초기화</button>
-  </div>
-  <div class="ticket-types">
-    <div class="ticket-type">
-      <span class="ticket-type-label">성인<br><small><%= prices.ADULT.toLocaleString() %>원</small></span>
-      <div class="counter">
-        <button type="button" class="counter-btn" data-category="ADULT" data-delta="-1">-</button>
-        <span class="counter-value" id="count-ADULT">0</span>
-        <button type="button" class="counter-btn" data-category="ADULT" data-delta="1">+</button>
-      </div>
-    </div>
-    <div class="ticket-type">
-      <span class="ticket-type-label">청소년<br><small><%= prices.TEEN.toLocaleString() %>원</small></span>
-      <div class="counter">
-        <button type="button" class="counter-btn" data-category="TEEN" data-delta="-1">-</button>
-        <span class="counter-value" id="count-TEEN">0</span>
-        <button type="button" class="counter-btn" data-category="TEEN" data-delta="1">+</button>
-      </div>
-    </div>
-    <div class="ticket-type">
-      <span class="ticket-type-label">경로<br><small><%= prices.SENIOR.toLocaleString() %>원</small></span>
-      <div class="counter">
-        <button type="button" class="counter-btn" data-category="SENIOR" data-delta="-1">-</button>
-        <span class="counter-value" id="count-SENIOR">0</span>
-        <button type="button" class="counter-btn" id="seniorPlusBtn" data-category="SENIOR" data-delta="1">+</button>
-      </div>
-    </div>
-    <div class="ticket-type">
-      <span class="ticket-type-label">우대<br><small><%= prices.DISABLED.toLocaleString() %>원</small></span>
-      <div class="counter">
-        <button type="button" class="counter-btn" data-category="DISABLED" data-delta="-1">-</button>
-        <span class="counter-value" id="count-DISABLED">0</span>
-        <button type="button" class="counter-btn" id="disabledPlusBtn" data-category="DISABLED" data-delta="1">+</button>
-      </div>
-    </div>
-  </div>
-</div>
+<div class="seat-page-layout">
+  <div class="seat-page-main">
+    <p id="bookError" class="error" style="display:none;"></p>
 
-<div class="screen-wrap">
-  <div class="screen-bar"></div>
-  <div class="screen-label">SCREEN</div>
-</div>
+    <div class="ticket-panel">
+      <div class="ticket-panel-header">
+        <h2>관람인원선택</h2>
+        <button type="button" id="resetBtn" class="btn-secondary">초기화</button>
+      </div>
+      <div class="ticket-types">
+        <div class="ticket-type">
+          <span class="ticket-type-label">성인<br><small><%= prices.ADULT.toLocaleString() %>원</small></span>
+          <div class="counter">
+            <button type="button" class="counter-btn" data-category="ADULT" data-delta="-1">-</button>
+            <span class="counter-value" id="count-ADULT">0</span>
+            <button type="button" class="counter-btn" data-category="ADULT" data-delta="1">+</button>
+          </div>
+        </div>
+        <div class="ticket-type">
+          <span class="ticket-type-label">청소년<br><small><%= prices.TEEN.toLocaleString() %>원</small></span>
+          <div class="counter">
+            <button type="button" class="counter-btn" data-category="TEEN" data-delta="-1">-</button>
+            <span class="counter-value" id="count-TEEN">0</span>
+            <button type="button" class="counter-btn" data-category="TEEN" data-delta="1">+</button>
+          </div>
+        </div>
+        <div class="ticket-type">
+          <span class="ticket-type-label">경로<br><small><%= prices.SENIOR.toLocaleString() %>원</small></span>
+          <div class="counter">
+            <button type="button" class="counter-btn" data-category="SENIOR" data-delta="-1">-</button>
+            <span class="counter-value" id="count-SENIOR">0</span>
+            <button type="button" class="counter-btn" id="seniorPlusBtn" data-category="SENIOR" data-delta="1">+</button>
+          </div>
+        </div>
+        <div class="ticket-type">
+          <span class="ticket-type-label">우대<br><small><%= prices.DISABLED.toLocaleString() %>원</small></span>
+          <div class="counter">
+            <button type="button" class="counter-btn" data-category="DISABLED" data-delta="-1">-</button>
+            <span class="counter-value" id="count-DISABLED">0</span>
+            <button type="button" class="counter-btn" id="disabledPlusBtn" data-category="DISABLED" data-delta="1">+</button>
+          </div>
+        </div>
+      </div>
+    </div>
 
-<div class="seat-grid">
-<% for (let r = 0; r < rows; r++) { %>
-  <div class="seat-row">
-  <% seats.slice(r * showtime.cols, r * showtime.cols + showtime.cols).forEach(function(seat, c) { %>
-    <% if (seat.booked) { %>
-      <div class="seat booked"><%= seat.label %></div>
-    <% } else { %>
-      <button type="button" class="seat" data-row="<%= r %>" data-col="<%= c %>" data-label="<%= seat.label %>"><%= seat.label %></button>
+    <div class="screen-wrap">
+      <div class="screen-bar"></div>
+      <div class="screen-label">SCREEN</div>
+    </div>
+
+    <div class="seat-grid">
+    <% for (let r = 0; r < rows; r++) { %>
+      <div class="seat-row">
+      <% seats.slice(r * showtime.cols, r * showtime.cols + showtime.cols).forEach(function(seat, c) { %>
+        <% if (seat.booked) { %>
+          <div class="seat booked"><%= seat.label %></div>
+        <% } else { %>
+          <button type="button" class="seat" data-row="<%= r %>" data-col="<%= c %>" data-label="<%= seat.label %>"><%= seat.label %></button>
+        <% } %>
+      <% }) %>
+      </div>
     <% } %>
-  <% }) %>
+    </div>
+    <p class="seat-hint">관람인원을 먼저 선택한 뒤 좌석을 클릭해주세요. 2인 1조는 클릭한 좌석의 옆자리가 함께 선택되고, 홀수 인원의 마지막 1명은 좌석 1개만 선택됩니다.</p>
   </div>
-<% } %>
-</div>
-<div class="seat-legend">
-  <span><i class="seat-swatch available"></i> 선택 가능</span>
-  <span><i class="seat-swatch selected"></i> 선택됨</span>
-  <span><i class="seat-swatch booked"></i> 예매 완료</span>
-</div>
-<p class="seat-hint">관람인원을 먼저 선택한 뒤 좌석을 클릭해주세요. 2인 1조는 클릭한 좌석의 옆자리가 함께 선택되고, 홀수 인원의 마지막 1명은 좌석 1개만 선택됩니다.</p>
 
-<div class="booking-summary">
-  <span id="selectedCountText">선택 좌석 0 / 0</span>
-  <span id="totalPriceText">0원</span>
-  <button type="button" id="confirmBookBtn" class="btn-primary" disabled>예매하기</button>
+  <aside class="seat-sidebar">
+    <div class="seat-sidebar-movie">
+      <div class="seat-sidebar-movie-text">
+        <span class="age-badge age-<%= showtime.movie.ageRating %>"><%= showtime.movie.ageRating %></span>
+        <h2><%= showtime.movie.title %></h2>
+        <p class="seat-sidebar-theater"><%= showtime.theaterName %></p>
+        <p class="seat-sidebar-datetime"><%= new Date(showtime.startAt).toLocaleString('ko-KR') %></p>
+      </div>
+      <% if (showtime.movie.posterUrl) { %>
+        <img class="seat-sidebar-poster" src="<%= showtime.movie.posterUrl %>" alt="<%= showtime.movie.title %> 포스터" />
+      <% } %>
+    </div>
+
+    <div class="seat-sidebar-legend">
+      <span><i class="seat-swatch available"></i> 선택 가능</span>
+      <span><i class="seat-swatch selected"></i> 선택</span>
+      <span><i class="seat-swatch booked"></i> 예매 완료</span>
+    </div>
+
+    <div class="seat-sidebar-block">
+      <p class="seat-sidebar-label">선택좌석</p>
+      <div id="selectedSeatChips" class="seat-sidebar-chips">
+        <span class="seat-sidebar-empty">좌석을 선택해주세요</span>
+      </div>
+    </div>
+
+    <div class="seat-sidebar-block">
+      <p id="selectedCountText" class="seat-sidebar-label">선택 좌석 0 / 0</p>
+      <p class="seat-sidebar-total">
+        <span>최종결제금액</span>
+        <strong id="totalPriceText">0원</strong>
+      </p>
+    </div>
+
+    <button type="button" id="confirmBookBtn" class="btn-primary seat-sidebar-book-btn" disabled>예매하기</button>
+  </aside>
 </div>
 
 <!-- 경로 안내 팝업 -->
@@ -171,10 +200,20 @@
     document.querySelectorAll('.seat:not(.booked)').forEach(function (el) {
       el.classList.remove('selected');
     });
-    selectedGroups.flat().forEach(function (label) {
+    var selectedLabels = selectedGroups.flat();
+    selectedLabels.forEach(function (label) {
       var el = seatEl(label);
       if (el) el.classList.add('selected');
     });
+
+    var chipsEl = document.getElementById('selectedSeatChips');
+    if (selectedLabels.length === 0) {
+      chipsEl.innerHTML = '<span class="seat-sidebar-empty">좌석을 선택해주세요</span>';
+    } else {
+      chipsEl.innerHTML = selectedLabels
+        .map(function (label) { return '<span class="seat-sidebar-chip">' + label + '</span>'; })
+        .join('');
+    }
 
     var total = totalTickets();
     var confirmBtn = document.getElementById('confirmBookBtn');
