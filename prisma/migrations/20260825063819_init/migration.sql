@@ -3,6 +3,7 @@ CREATE TABLE "User" (
     "id" SERIAL NOT NULL,
     "username" TEXT NOT NULL,
     "email" TEXT NOT NULL,
+    "phone" TEXT NOT NULL,
     "passwordHash" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -15,6 +16,7 @@ CREATE TABLE "Movie" (
     "title" TEXT NOT NULL,
     "genre" TEXT NOT NULL,
     "runningTimeMin" INTEGER NOT NULL,
+    "posterUrl" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "Movie_pkey" PRIMARY KEY ("id")

@@ -11,7 +11,10 @@
     <button type="button" id="checkUsernameBtn" style="white-space:nowrap;">중복확인</button>
   </div>
   <p id="usernameStatus" style="margin:0; font-size:0.85rem;"></p>
-  <input type="email" name="email" placeholder="이메일" required />
+  <input type="email" name="email" placeholder="이메일 (example@gmail.com)" required
+    pattern="[^\s@]+@[^\s@]+\.[^\s@]+" title="example@gmail.com 형식으로 입력해주세요" />
+  <input type="tel" name="phone" placeholder="휴대전화번호 (010-1234-5678)" required
+    pattern="01[016789]-?\d{3,4}-?\d{4}" title="010-1234-5678 형식으로 입력해주세요" />
   <input type="password" name="password" placeholder="비밀번호" required minlength="4" />
   <input type="password" name="passwordConfirm" placeholder="비밀번호 확인" required minlength="4" />
   <button type="submit" id="submitBtn" disabled>가입하기</button>

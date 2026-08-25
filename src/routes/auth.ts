@@ -5,6 +5,9 @@ import { asyncHandler } from '../middleware/asyncHandler';
 
 export const authRouter = Router();
 
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const PHONE_PATTERN = /^01[016789]-?\d{3,4}-?\d{4}$/;
+
 authRouter.get('/signup', (_req, res) => {
   res.render('signup', { error: null });
 });
@@ -19,9 +22,15 @@ authRouter.get('/signup/check-username', asyncHandler(async (req, res) => {
 }));
 
 authRouter.post('/signup', asyncHandler(async (req, res) => {
-  const { username, email, password, passwordConfirm } = req.body;
-  if (!username || !email || !password || !passwordConfirm) {
+  const { username, email, phone, password, passwordConfirm } = req.body;
+  if (!username || !email || !phone || !password || !passwordConfirm) {
     return res.status(400).render('signup', { error: '모든 항목을 입력해주세요.' });
+  }
+  if (!EMAIL_PATTERN.test(email)) {
+    return res.status(400).render('signup', { error: '올바른 이메일 형식이 아닙니다.' });
+  }
+  if (!PHONE_PATTERN.test(phone)) {
+    return res.status(400).render('signup', { error: '올바른 휴대전화번호 형식이 아닙니다.' });
   }
   if (password !== passwordConfirm) {
     return res.status(400).render('signup', { error: '비밀번호가 일치하지 않습니다.' });
@@ -37,7 +46,7 @@ authRouter.post('/signup', asyncHandler(async (req, res) => {
   }
 
   const passwordHash = await bcrypt.hash(password, 10);
-  await prisma.user.create({ data: { username, email, passwordHash } });
+  await prisma.user.create({ data: { username, email, phone, passwordHash } });
   res.redirect('/login');
 }));
 

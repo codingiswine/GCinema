@@ -11,6 +11,7 @@ model User {
   id           Int       @id @default(autoincrement())
   username     String    @unique
   email        String    @unique
+  phone        String
   passwordHash String
   createdAt    DateTime  @default(now())
   bookings     Booking[]
@@ -21,6 +22,7 @@ model Movie {
   title          String
   genre          String
   runningTimeMin Int
+  posterUrl      String?
   createdAt      DateTime   @default(now())
   showtimes      Showtime[]
 }

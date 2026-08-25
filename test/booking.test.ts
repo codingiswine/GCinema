@@ -3,10 +3,10 @@ import { app } from '../src/app';
 import { prisma } from '../src/db';
 
 const rand = () => Math.random().toString(36).slice(2, 8);
-const signup = (username: string, email = `${username}@test.com`) =>
+const signup = (username: string, email = `${username}@test.com`, phone = '010-1234-5678') =>
   request(app)
     .post('/signup')
-    .send({ username, email, password: 'password123', passwordConfirm: 'password123' });
+    .send({ username, email, phone, password: 'password123', passwordConfirm: 'password123' });
 
 describe('booking flow', () => {
   let movieId: number;
@@ -54,6 +54,36 @@ describe('booking flow', () => {
     await signup(`user_${rand()}`, email);
     const res = await signup(`user_${rand()}`, email);
     expect(res.status).toBe(409);
+  });
+
+  test('올바르지 않은 형식의 이메일이면 회원가입에 실패한다', async () => {
+    const username = `user_${rand()}`;
+    const res = await signup(username, 'darknight@gmail');
+    expect(res.status).toBe(400);
+    const user = await prisma.user.findUnique({ where: { username } });
+    expect(user).toBeNull();
+  });
+
+  test('휴대전화번호 없이 회원가입하면 실패한다', async () => {
+    const username = `user_${rand()}`;
+    const res = await request(app)
+      .post('/signup')
+      .send({
+        username,
+        email: `${username}@test.com`,
+        password: 'password123',
+        passwordConfirm: 'password123',
+      });
+    expect(res.status).toBe(400);
+    const user = await prisma.user.findUnique({ where: { username } });
+    expect(user).toBeNull();
+  });
+
+  test('휴대전화번호가 저장된다', async () => {
+    const username = `user_${rand()}`;
+    await signup(username, `${username}@test.com`, '010-9999-8888');
+    const user = await prisma.user.findUnique({ where: { username } });
+    expect(user!.phone).toBe('010-9999-8888');
   });
 
   test('비밀번호 확인이 일치하지 않으면 회원가입에 실패한다', async () => {

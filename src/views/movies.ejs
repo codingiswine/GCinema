@@ -4,12 +4,19 @@
 <body>
 <%- include('partials/nav') %>
 <h1>영화 목록</h1>
+<div class="movie-list">
 <% movies.forEach(function(movie) { %>
-  <div class="card">
-    <a href="/movies/<%= movie.id %>"><%= movie.title %></a>
-    <p><%= movie.genre %> · <%= movie.runningTimeMin %>분</p>
-  </div>
+  <a class="movie-card" href="/movies/<%= movie.id %>">
+    <% if (movie.posterUrl) { %>
+      <img class="movie-poster" src="<%= movie.posterUrl %>" alt="<%= movie.title %> 포스터" />
+    <% } %>
+    <div class="movie-info">
+      <div class="movie-title"><%= movie.title %></div>
+      <p><%= movie.genre %> · <%= movie.runningTimeMin %>분</p>
+    </div>
+  </a>
 <% }) %>
+</div>
 <% if (movies.length === 0) { %><p>등록된 영화가 없습니다.</p><% } %>
 </body>
 </html>
