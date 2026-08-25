@@ -26,10 +26,12 @@
     </select>
     <span>-</span>
     <input type="text" id="phoneMid" inputmode="numeric" maxlength="4" pattern="\d{3,4}"
-      placeholder="1234" required style="flex:1; min-width:0;" value="<%= formValues.phoneMid %>" />
+      placeholder="1234" required style="flex:1; min-width:0;" value="<%= formValues.phoneMid %>"
+      class="<%= duplicateField === 'phone' ? 'field-error' : '' %>" />
     <span>-</span>
     <input type="text" id="phoneLast" inputmode="numeric" maxlength="4" pattern="\d{4}"
-      placeholder="5678" required style="flex:1; min-width:0;" value="<%= formValues.phoneLast %>" />
+      placeholder="5678" required style="flex:1; min-width:0;" value="<%= formValues.phoneLast %>"
+      class="<%= duplicateField === 'phone' ? 'field-error' : '' %>" />
   </div>
 
   <div style="display:flex; gap:6px; align-items:center;">
@@ -107,7 +109,16 @@
   var passwordInput = document.getElementById('password');
   var passwordStatus = document.getElementById('passwordStatus');
 
+  var USERNAME_PATTERN = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z0-9]{5,}$/;
+
   document.getElementById('signupForm').addEventListener('submit', function (e) {
+    if (!USERNAME_PATTERN.test(usernameInput.value.trim())) {
+      e.preventDefault();
+      statusEl.style.color = '#c0392b';
+      statusEl.textContent = '아이디는 영문과 숫자를 포함해 5자 이상이어야 합니다.';
+      usernameInput.focus();
+      return;
+    }
     if (!usernameVerified) {
       e.preventDefault();
       statusEl.style.color = '#c0392b';

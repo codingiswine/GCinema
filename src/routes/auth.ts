@@ -8,6 +8,7 @@ export const authRouter = Router();
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PHONE_PATTERN = /^01[016789]-?\d{3,4}-?\d{4}$/;
 const PASSWORD_PATTERN = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z0-9\s]).{8,}$/;
+const USERNAME_PATTERN = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z0-9]{5,}$/;
 const EMAIL_PRESET_DOMAINS = ['naver.com', 'gmail.com', 'daum.net', 'hanmail.net', 'nate.com'];
 
 function emptyFormValues() {
@@ -63,6 +64,13 @@ authRouter.post('/signup', asyncHandler(async (req, res) => {
       .status(400)
       .render('signup', { error: '모든 항목을 입력해주세요.', formValues, duplicateField: null });
   }
+  if (!USERNAME_PATTERN.test(username)) {
+    return res.status(400).render('signup', {
+      error: '아이디는 영문과 숫자를 포함해 5자 이상이어야 합니다.',
+      formValues,
+      duplicateField: null,
+    });
+  }
   if (!EMAIL_PATTERN.test(email)) {
     return res
       .status(400)
@@ -97,9 +105,17 @@ authRouter.post('/signup', asyncHandler(async (req, res) => {
   const existingEmail = await prisma.user.findUnique({ where: { email } });
   if (existingEmail) {
     return res.status(409).render('signup', {
-      error: '이미 가입된 이메일입니다.',
+      error: '이미 가입된 이메일 주소가 있습니다.',
       formValues,
       duplicateField: 'email',
+    });
+  }
+  const existingPhone = await prisma.user.findUnique({ where: { phone } });
+  if (existingPhone) {
+    return res.status(409).render('signup', {
+      error: '이미 가입된 핸드폰 번호가 있습니다.',
+      formValues,
+      duplicateField: 'phone',
     });
   }
 
