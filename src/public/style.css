@@ -29,6 +29,13 @@ body {
   color: #888;
   font-size: 0.82rem;
 }
+.footer-links {
+  display: flex; flex-wrap: wrap; justify-content: center;
+  gap: 0 12px; margin-bottom: 14px; font-size: 0.78rem; color: #777;
+}
+.footer-links span:not(:last-child) { border-right: 1px solid #ddd; padding-right: 12px; }
+.footer-company { line-height: 1.6; }
+.footer-company p { margin: 0; }
 nav {
   display: flex;
   justify-content: space-between;
