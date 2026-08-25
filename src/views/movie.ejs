@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="ko">
+<%- include('partials/head') %>
+<body>
+<%- include('partials/nav') %>
+<h1><%= movie.title %></h1>
+<p><%= movie.genre %> · <%= movie.runningTimeMin %>분</p>
+<h2>상영 시간</h2>
+<% movie.showtimes.forEach(function(st) { %>
+  <div class="card">
+    <a href="/showtimes/<%= st.id %>">
+      <%= st.theaterName %> · <%= new Date(st.startAt).toLocaleString('ko-KR') %>
+    </a>
+  </div>
+<% }) %>
+<% if (movie.showtimes.length === 0) { %><p>예정된 상영 시간이 없습니다.</p><% } %>
+</body>
+</html>

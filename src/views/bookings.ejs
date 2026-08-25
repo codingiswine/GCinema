@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="ko">
+<%- include('partials/head') %>
+<body>
+<%- include('partials/nav') %>
+<h1>내 예매 내역</h1>
+<% bookings.forEach(function(b) { %>
+  <div class="card">
+    <strong><%= b.showtime.movie.title %></strong>
+    <p><%= b.showtime.theaterName %> · <%= new Date(b.showtime.startAt).toLocaleString('ko-KR') %> · 좌석 <%= b.seatLabel %></p>
+  </div>
+<% }) %>
+<% if (bookings.length === 0) { %><p>예매 내역이 없습니다.</p><% } %>
+</body>
+</html>

@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="ko">
+<%- include('partials/head') %>
+<body>
+<%- include('partials/nav') %>
+<h1>회원가입</h1>
+<% if (error) { %><p class="error"><%= error %></p><% } %>
+<form action="/signup" method="post">
+  <input type="text" name="name" placeholder="이름" required />
+  <input type="email" name="email" placeholder="이메일" required />
+  <input type="password" name="password" placeholder="비밀번호" required minlength="4" />
+  <button type="submit">가입하기</button>
+</form>
+<p>이미 계정이 있으신가요? <a href="/login">로그인</a></p>
+</body>
+</html>
