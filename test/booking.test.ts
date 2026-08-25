@@ -15,7 +15,15 @@ describe('booking flow', () => {
 
   beforeAll(async () => {
     const movie = await prisma.movie.create({
-      data: { title: 'Test Movie', genre: 'Test', runningTimeMin: 100, ageRating: '15' },
+      data: {
+        title: 'Test Movie',
+        genre: 'Test',
+        runningTimeMin: 100,
+        ageRating: '15',
+        satisfactionPercent: 90,
+        bookingRatePercent: 10,
+        cumulativeViewers: '1.0만',
+      },
     });
     movieId = movie.id;
     const showtime = await prisma.showtime.create({

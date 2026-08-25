@@ -5,6 +5,9 @@ const prisma = new PrismaClient();
 const DAYS_AHEAD = 7;
 const COLS = 14;
 
+// 박스오피스 1~2위인 오디세이/스파이더맨은 같은 시간표(오디세이 심야 포함)를 쓴다.
+const TOP_MOVIE_TIMES = ['10:35', '14:00', '17:15', '20:35', '23:50'];
+
 // Real GCinema-style capacities per movie. 67 isn't a clean multiple of
 // COLS, so that hall's last row ends up partially filled (see seatLabels
 // in src/routes/bookings.ts).
@@ -17,7 +20,10 @@ const movieData = [
     posterUrl: '/posters/1.jpg',
     theaterName: '1관',
     totalSeats: 84,
-    times: ['10:35', '14:00', '17:15', '20:35'],
+    times: TOP_MOVIE_TIMES,
+    satisfactionPercent: 98,
+    bookingRatePercent: 71,
+    cumulativeViewers: '729.5만',
   },
   {
     title: '스파이더맨: 브랜드 뉴 데이',
@@ -27,7 +33,10 @@ const movieData = [
     posterUrl: '/posters/2.jpg',
     theaterName: '2관',
     totalSeats: 84,
-    times: ['19:20', '22:10'],
+    times: TOP_MOVIE_TIMES,
+    satisfactionPercent: 97,
+    bookingRatePercent: 8.8,
+    cumulativeViewers: '817.3만',
   },
   {
     title: '경주기행',
@@ -37,7 +46,10 @@ const movieData = [
     posterUrl: '/posters/3.jpg',
     theaterName: '3관',
     totalSeats: 42,
-    times: ['10:30', '12:45', '15:05', '17:20', '19:35', '21:50'],
+    times: ['10:30', '12:45', '17:20', '21:50'],
+    satisfactionPercent: 95,
+    bookingRatePercent: 4.1,
+    cumulativeViewers: '15.2만',
   },
   {
     title: '오크 스트리트의 마지막 날',
@@ -47,7 +59,10 @@ const movieData = [
     posterUrl: '/posters/4.jpg',
     theaterName: '4관',
     totalSeats: 67,
-    times: ['10:30'],
+    times: ['10:30', '13:10', '17:40', '20:50'],
+    satisfactionPercent: 92,
+    bookingRatePercent: 3.7,
+    cumulativeViewers: '12.8만',
   },
   // 상영관을 4개로만 정리하는 편이 화면이 깔끔해서 호프는 잠시 숨겨둠.
   // {
@@ -59,6 +74,9 @@ const movieData = [
   //   theaterName: '5관',
   //   totalSeats: 60,
   //   times: ['11:00', '15:30', '20:00'],
+  //   satisfactionPercent: 90,
+  //   bookingRatePercent: 2.5,
+  //   cumulativeViewers: '8.4만',
   // },
 ];
 
@@ -78,6 +96,9 @@ async function main() {
         runningTimeMin: m.runningTimeMin,
         ageRating: m.ageRating,
         posterUrl: m.posterUrl,
+        satisfactionPercent: m.satisfactionPercent,
+        bookingRatePercent: m.bookingRatePercent,
+        cumulativeViewers: m.cumulativeViewers,
       },
     });
 

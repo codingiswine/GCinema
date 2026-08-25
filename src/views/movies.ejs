@@ -5,19 +5,26 @@
 <%- include('partials/nav') %>
 <h1>영화 목록</h1>
 <div class="movie-list">
-<% movies.forEach(function(movie) { %>
-  <a class="movie-card" href="/movies/<%= movie.id %>">
-    <% if (movie.posterUrl) { %>
-      <img class="movie-poster" src="<%= movie.posterUrl %>" alt="<%= movie.title %> 포스터" />
-    <% } %>
+<% movies.forEach(function(movie, i) { %>
+  <div class="movie-card">
+    <a class="movie-poster-link" href="/movies/<%= movie.id %>">
+      <% if (movie.posterUrl) { %>
+        <img class="movie-poster" src="<%= movie.posterUrl %>" alt="<%= movie.title %> 포스터" />
+      <% } %>
+      <span class="movie-rank"><%= i + 1 %></span>
+    </a>
     <div class="movie-info">
       <div class="movie-title">
-        <span class="age-badge age-<%= movie.ageRating %>"><%= movie.ageRating %></span>
         <%= movie.title %>
+        <span class="age-badge age-<%= movie.ageRating %>"><%= movie.ageRating %></span>
       </div>
-      <p><%= movie.genre %> · <%= movie.runningTimeMin %>분</p>
+      <p class="movie-stats">
+        <img class="movie-stats-mark" src="/gc-mark.png" alt="" />
+        만족도 <%= movie.satisfactionPercent %>% &nbsp;|&nbsp; 예매율 <%= movie.bookingRatePercent %>% &nbsp;|&nbsp; 누적 <%= movie.cumulativeViewers %>
+      </p>
+      <a class="movie-book-btn" href="/movies/<%= movie.id %>">예매하기</a>
     </div>
-  </a>
+  </div>
 <% }) %>
 </div>
 <% if (movies.length === 0) { %><p>등록된 영화가 없습니다.</p><% } %>

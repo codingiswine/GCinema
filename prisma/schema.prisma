@@ -18,14 +18,17 @@ model User {
 }
 
 model Movie {
-  id             Int        @id @default(autoincrement())
-  title          String
-  genre          String
-  runningTimeMin Int
-  ageRating      String
-  posterUrl      String?
-  createdAt      DateTime   @default(now())
-  showtimes      Showtime[]
+  id                  Int        @id @default(autoincrement())
+  title               String
+  genre               String
+  runningTimeMin      Int
+  ageRating           String
+  posterUrl           String?
+  satisfactionPercent Int
+  bookingRatePercent  Float
+  cumulativeViewers   String
+  createdAt           DateTime   @default(now())
+  showtimes           Showtime[]
 }
 
 model Showtime {

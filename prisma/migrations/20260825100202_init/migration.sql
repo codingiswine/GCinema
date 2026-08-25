@@ -21,6 +21,9 @@ CREATE TABLE "Movie" (
     "runningTimeMin" INTEGER NOT NULL,
     "ageRating" TEXT NOT NULL,
     "posterUrl" TEXT,
+    "satisfactionPercent" INTEGER NOT NULL,
+    "bookingRatePercent" DOUBLE PRECISION NOT NULL,
+    "cumulativeViewers" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "Movie_pkey" PRIMARY KEY ("id")
