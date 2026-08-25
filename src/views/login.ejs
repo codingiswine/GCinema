@@ -3,6 +3,7 @@
 <%- include('partials/head') %>
 <body>
 <%- include('partials/nav') %>
+<div class="auth-box">
 <h1>로그인</h1>
 <% if (error) { %><p class="error"><%= error %></p><% } %>
 <form action="/login" method="post">
@@ -11,6 +12,7 @@
   <button type="submit">로그인</button>
 </form>
 <p>계정이 없으신가요? <a href="/signup">회원가입</a></p>
+</div>
 <%- include('partials/footer') %>
 </body>
 </html>

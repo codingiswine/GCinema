@@ -45,6 +45,8 @@ h1 { font-size: 1.4rem; }
   background: #fff;
 }
 .card a { text-decoration: none; color: #111; font-weight: 600; }
+.auth-box { max-width: 360px; margin: 40px auto 0; text-align: center; }
+.auth-box form { margin: 0 auto; text-align: left; }
 form { display: flex; flex-direction: column; gap: 10px; max-width: 320px; }
 input, button {
   padding: 8px 10px;
