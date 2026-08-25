@@ -4,7 +4,9 @@ import { prisma } from '../src/db';
 
 const rand = () => Math.random().toString(36).slice(2, 8);
 const signup = (email: string) =>
-  request(app).post('/signup').send({ email, password: 'password123', name: 'Tester' });
+  request(app)
+    .post('/signup')
+    .send({ email, password: 'password123', passwordConfirm: 'password123', name: 'Tester' });
 
 describe('booking flow', () => {
   let movieId: number;
@@ -34,6 +36,16 @@ describe('booking flow', () => {
     expect(res.status).toBe(302);
     const user = await prisma.user.findUnique({ where: { email } });
     expect(user).not.toBeNull();
+  });
+
+  test('비밀번호 확인이 일치하지 않으면 회원가입에 실패한다', async () => {
+    const email = `user_${rand()}@test.com`;
+    const res = await request(app)
+      .post('/signup')
+      .send({ email, password: 'password123', passwordConfirm: 'different456', name: 'Tester' });
+    expect(res.status).toBe(400);
+    const user = await prisma.user.findUnique({ where: { email } });
+    expect(user).toBeNull();
   });
 
   test('로그인 성공 시 세션 쿠키가 발급된다', async () => {
