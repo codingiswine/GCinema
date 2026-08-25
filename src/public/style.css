@@ -92,14 +92,14 @@ button:hover { background: #444; }
 .movie-rank {
   position: absolute;
   left: 8px;
-  bottom: 6px;
-  font-size: 2.4rem;
+  top: 6px;
+  font-size: 2rem;
   font-weight: 800;
   color: #fff;
   text-shadow: 0 1px 4px rgba(0, 0, 0, 0.7), 0 0 12px rgba(0, 0, 0, 0.5);
 }
+.movie-age-overlay { position: absolute; right: 8px; bottom: 8px; }
 .movie-info { padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
-.movie-title { font-weight: 700; font-size: 1.05rem; display: flex; align-items: center; gap: 6px; }
 .movie-stats { margin: 0; color: #666; font-size: 0.8rem; display: flex; align-items: center; gap: 4px; }
 .movie-stats-mark { width: 15px; height: 15px; object-fit: contain; }
 .movie-book-btn {

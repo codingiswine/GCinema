@@ -12,12 +12,9 @@
         <img class="movie-poster" src="<%= movie.posterUrl %>" alt="<%= movie.title %> 포스터" />
       <% } %>
       <span class="movie-rank"><%= i + 1 %></span>
+      <span class="age-badge age-<%= movie.ageRating %> movie-age-overlay"><%= movie.ageRating %></span>
     </a>
     <div class="movie-info">
-      <div class="movie-title">
-        <%= movie.title %>
-        <span class="age-badge age-<%= movie.ageRating %>"><%= movie.ageRating %></span>
-      </div>
       <p class="movie-stats">
         <img class="movie-stats-mark" src="/gc-mark.png" alt="" />
         만족도 <%= movie.satisfactionPercent %>% &nbsp;|&nbsp; 예매율 <%= movie.bookingRatePercent %>% &nbsp;|&nbsp; 누적 <%= movie.cumulativeViewers %>
