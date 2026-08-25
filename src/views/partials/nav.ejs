@@ -10,12 +10,15 @@
 <nav>
   <div class="nav-left">
     <div class="breadcrumb">
-      <% var crumbs = (typeof breadcrumb !== 'undefined' && breadcrumb) ? breadcrumb : ['영화 목록']; %>
-      <a href="/movies"><%= crumbs[0] %></a>
-      <% for (var i = 1; i < crumbs.length; i++) { %>
-        <span class="breadcrumb-sep">&gt;</span>
-        <span class="breadcrumb-current"><%= crumbs[i] %></span>
-      <% } %>
+      <% var crumbs = (typeof breadcrumb !== 'undefined' && breadcrumb) ? breadcrumb : [{ label: '영화 목록', href: '/movies' }]; %>
+      <% crumbs.forEach(function (c, i) { %>
+        <% if (i > 0) { %><span class="breadcrumb-sep">&gt;</span><% } %>
+        <% if (c.href) { %>
+          <a href="<%= c.href %>"><%= c.label %></a>
+        <% } else { %>
+          <span class="breadcrumb-current"><%= c.label %></span>
+        <% } %>
+      <% }) %>
     </div>
   </div>
   <div class="nav-right">

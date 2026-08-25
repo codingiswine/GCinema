@@ -58,7 +58,11 @@ bookingsRouter.get('/showtimes/:id', asyncHandler(async (req, res) => {
     seats,
     rows,
     prices: TICKET_PRICES,
-    breadcrumb: ['영화 목록', '예매', '좌석 선택'],
+    breadcrumb: [
+      { label: '영화 목록', href: '/movies' },
+      { label: '예매', href: `/movies/${showtime.movieId}` },
+      { label: '좌석 선택' },
+    ],
   });
 }));
 

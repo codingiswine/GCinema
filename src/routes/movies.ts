@@ -69,5 +69,12 @@ moviesRouter.get('/movies/:id', asyncHandler(async (req, res) => {
     include: { _count: { select: { bookings: true } } },
   });
 
-  res.render('movie', { movies, movie, dateOptions, selectedKey, showtimes, breadcrumb: ['영화 목록', '예매'] });
+  res.render('movie', {
+    movies,
+    movie,
+    dateOptions,
+    selectedKey,
+    showtimes,
+    breadcrumb: [{ label: '영화 목록', href: '/movies' }, { label: '예매' }],
+  });
 }));

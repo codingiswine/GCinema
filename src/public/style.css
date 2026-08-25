@@ -189,12 +189,12 @@ button:hover { background: #444; }
 .seat-page-layout { display: flex; gap: 20px; align-items: flex-start; }
 .seat-page-main { flex: 1; min-width: 0; }
 .seat-sidebar {
-  flex: 0 0 260px; display: flex; flex-direction: column; gap: 14px;
+  flex: 0 0 300px; display: flex; flex-direction: column; gap: 14px;
   border: 1px solid #ddd; border-radius: 10px; padding: 16px; background: #fff;
   position: sticky; top: 16px;
 }
 .seat-sidebar-movie { display: flex; gap: 10px; justify-content: space-between; }
-.seat-sidebar-movie-text h2 { margin: 4px 0 6px; font-size: 1rem; }
+.seat-sidebar-movie-text h2 { margin: 4px 0 6px; font-size: 1rem; white-space: nowrap; }
 .seat-sidebar-theater { margin: 0; font-size: 0.85rem; color: #333; }
 .seat-sidebar-datetime { margin: 2px 0 0; font-size: 0.8rem; color: #888; }
 .seat-sidebar-poster { flex: 0 0 56px; width: 56px; height: 84px; object-fit: cover; border-radius: 6px; }
