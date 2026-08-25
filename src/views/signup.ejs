@@ -8,47 +8,53 @@
 <% if (error) { %><p class="error"><%= error %></p><% } %>
 <form action="/signup" method="post" id="signupForm">
   <div style="display:flex; gap:6px;">
-    <input type="text" name="username" id="username" placeholder="아이디" required style="flex:1" />
+    <input type="text" name="username" id="username" placeholder="아이디" required style="flex:1"
+      value="<%= formValues.username %>"
+      class="<%= duplicateField === 'username' ? 'field-error' : '' %>" />
     <button type="button" id="checkUsernameBtn" style="white-space:nowrap;">중복확인</button>
   </div>
   <p id="usernameStatus" style="margin:0; font-size:0.85rem;"></p>
 
   <div style="display:flex; gap:6px; align-items:center;">
     <select id="phonePrefix" required style="flex:0 0 76px;">
-      <option value="010">010</option>
-      <option value="011">011</option>
-      <option value="016">016</option>
-      <option value="017">017</option>
-      <option value="018">018</option>
-      <option value="019">019</option>
+      <option value="010" <%= formValues.phonePrefix === '010' ? 'selected' : '' %>>010</option>
+      <option value="011" <%= formValues.phonePrefix === '011' ? 'selected' : '' %>>011</option>
+      <option value="016" <%= formValues.phonePrefix === '016' ? 'selected' : '' %>>016</option>
+      <option value="017" <%= formValues.phonePrefix === '017' ? 'selected' : '' %>>017</option>
+      <option value="018" <%= formValues.phonePrefix === '018' ? 'selected' : '' %>>018</option>
+      <option value="019" <%= formValues.phonePrefix === '019' ? 'selected' : '' %>>019</option>
     </select>
     <span>-</span>
     <input type="text" id="phoneMid" inputmode="numeric" maxlength="4" pattern="\d{3,4}"
-      placeholder="1234" required style="flex:1; min-width:0;" />
+      placeholder="1234" required style="flex:1; min-width:0;" value="<%= formValues.phoneMid %>" />
     <span>-</span>
     <input type="text" id="phoneLast" inputmode="numeric" maxlength="4" pattern="\d{4}"
-      placeholder="5678" required style="flex:1; min-width:0;" />
+      placeholder="5678" required style="flex:1; min-width:0;" value="<%= formValues.phoneLast %>" />
   </div>
 
   <div style="display:flex; gap:6px; align-items:center;">
-    <input type="text" id="emailLocal" placeholder="이메일" required style="flex:1; min-width:0;" />
+    <input type="text" id="emailLocal" placeholder="이메일" required style="flex:1; min-width:0;"
+      value="<%= formValues.emailLocal %>"
+      class="<%= duplicateField === 'email' ? 'field-error' : '' %>" />
     <span>@</span>
     <select id="emailDomainSelect" style="flex:1; min-width:0;">
-      <option value="custom">직접입력</option>
-      <option value="naver.com">naver.com</option>
-      <option value="gmail.com">gmail.com</option>
-      <option value="daum.net">daum.net</option>
-      <option value="hanmail.net">hanmail.net</option>
-      <option value="nate.com">nate.com</option>
+      <option value="custom" <%= formValues.emailDomain === 'custom' ? 'selected' : '' %>>직접입력</option>
+      <option value="naver.com" <%= formValues.emailDomain === 'naver.com' ? 'selected' : '' %>>naver.com</option>
+      <option value="gmail.com" <%= formValues.emailDomain === 'gmail.com' ? 'selected' : '' %>>gmail.com</option>
+      <option value="daum.net" <%= formValues.emailDomain === 'daum.net' ? 'selected' : '' %>>daum.net</option>
+      <option value="hanmail.net" <%= formValues.emailDomain === 'hanmail.net' ? 'selected' : '' %>>hanmail.net</option>
+      <option value="nate.com" <%= formValues.emailDomain === 'nate.com' ? 'selected' : '' %>>nate.com</option>
     </select>
   </div>
-  <input type="text" id="emailDomainCustom" placeholder="도메인 입력 (예: gmail.com)" required />
+  <input type="text" id="emailDomainCustom" placeholder="도메인 입력 (예: gmail.com)" required
+    value="<%= formValues.emailDomainCustom %>" />
 
-  <input type="password" name="password" placeholder="비밀번호" required minlength="4" />
-  <input type="password" name="passwordConfirm" placeholder="비밀번호 확인" required minlength="4" />
+  <input type="password" name="password" id="password" placeholder="비밀번호 (영문+숫자+특수문자 8자 이상)" required />
+  <input type="password" name="passwordConfirm" placeholder="비밀번호 확인" required />
+  <p id="passwordStatus" class="error" style="display:none; margin:0;"></p>
   <input type="hidden" name="phone" id="phoneHidden" />
   <input type="hidden" name="email" id="emailHidden" />
-  <button type="submit" id="submitBtn" disabled>가입하기</button>
+  <button type="submit" id="submitBtn">가입하기</button>
 </form>
 <p>이미 계정이 있으신가요? <a href="/login">로그인</a></p>
 </div>
@@ -56,10 +62,10 @@
   var usernameInput = document.getElementById('username');
   var checkBtn = document.getElementById('checkUsernameBtn');
   var statusEl = document.getElementById('usernameStatus');
-  var submitBtn = document.getElementById('submitBtn');
+  var usernameVerified = false;
 
   usernameInput.addEventListener('input', function () {
-    submitBtn.disabled = true;
+    usernameVerified = false;
     statusEl.textContent = '';
   });
 
@@ -76,11 +82,11 @@
         if (data.available) {
           statusEl.style.color = '#2e7d32';
           statusEl.textContent = '사용 가능한 아이디입니다.';
-          submitBtn.disabled = false;
+          usernameVerified = true;
         } else {
           statusEl.style.color = '#c0392b';
           statusEl.textContent = '이미 사용 중인 아이디입니다.';
-          submitBtn.disabled = true;
+          usernameVerified = false;
         }
       });
   });
@@ -97,7 +103,28 @@
   emailDomainSelect.addEventListener('change', updateEmailMode);
   updateEmailMode();
 
-  document.getElementById('signupForm').addEventListener('submit', function () {
+  var PASSWORD_PATTERN = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z0-9\s]).{8,}$/;
+  var passwordInput = document.getElementById('password');
+  var passwordStatus = document.getElementById('passwordStatus');
+
+  document.getElementById('signupForm').addEventListener('submit', function (e) {
+    if (!usernameVerified) {
+      e.preventDefault();
+      statusEl.style.color = '#c0392b';
+      statusEl.textContent = '아이디 중복확인을 해주세요.';
+      usernameInput.focus();
+      return;
+    }
+
+    if (!PASSWORD_PATTERN.test(passwordInput.value)) {
+      e.preventDefault();
+      passwordStatus.textContent = '비밀번호는 영문, 숫자, 특수문자를 포함해 8자 이상이어야 합니다.';
+      passwordStatus.style.display = '';
+      passwordInput.focus();
+      return;
+    }
+    passwordStatus.style.display = 'none';
+
     var prefix = document.getElementById('phonePrefix').value;
     var mid = document.getElementById('phoneMid').value.trim();
     var last = document.getElementById('phoneLast').value.trim();

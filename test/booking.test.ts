@@ -3,10 +3,11 @@ import { app } from '../src/app';
 import { prisma } from '../src/db';
 
 const rand = () => Math.random().toString(36).slice(2, 8);
+const VALID_PASSWORD = 'Password1!';
 const signup = (username: string, email = `${username}@test.com`, phone = '010-1234-5678') =>
   request(app)
     .post('/signup')
-    .send({ username, email, phone, password: 'password123', passwordConfirm: 'password123' });
+    .send({ username, email, phone, password: VALID_PASSWORD, passwordConfirm: VALID_PASSWORD });
 
 describe('booking flow', () => {
   let movieId: number;
@@ -43,7 +44,7 @@ describe('booking flow', () => {
     const username = `user_${rand()}`;
     const res = await request(app)
       .post('/signup')
-      .send({ username, password: 'password123', passwordConfirm: 'password123' });
+      .send({ username, password: VALID_PASSWORD, passwordConfirm: VALID_PASSWORD });
     expect(res.status).toBe(400);
     const user = await prisma.user.findUnique({ where: { username } });
     expect(user).toBeNull();
@@ -71,8 +72,8 @@ describe('booking flow', () => {
       .send({
         username,
         email: `${username}@test.com`,
-        password: 'password123',
-        passwordConfirm: 'password123',
+        password: VALID_PASSWORD,
+        passwordConfirm: VALID_PASSWORD,
       });
     expect(res.status).toBe(400);
     const user = await prisma.user.findUnique({ where: { username } });
@@ -90,7 +91,29 @@ describe('booking flow', () => {
     const username = `user_${rand()}`;
     const res = await request(app)
       .post('/signup')
-      .send({ username, password: 'password123', passwordConfirm: 'different456' });
+      .send({
+        username,
+        email: `${username}@test.com`,
+        phone: '010-1234-5678',
+        password: VALID_PASSWORD,
+        passwordConfirm: 'Different1!',
+      });
+    expect(res.status).toBe(400);
+    const user = await prisma.user.findUnique({ where: { username } });
+    expect(user).toBeNull();
+  });
+
+  test('비밀번호가 정책(영문+숫자+특수문자 8자 이상)을 충족하지 않으면 회원가입에 실패한다', async () => {
+    const username = `user_${rand()}`;
+    const res = await request(app)
+      .post('/signup')
+      .send({
+        username,
+        email: `${username}@test.com`,
+        phone: '010-1234-5678',
+        password: 'weakpass1',
+        passwordConfirm: 'weakpass1',
+      });
     expect(res.status).toBe(400);
     const user = await prisma.user.findUnique({ where: { username } });
     expect(user).toBeNull();
@@ -101,6 +124,16 @@ describe('booking flow', () => {
     await signup(username);
     const res = await signup(username);
     expect(res.status).toBe(409);
+  });
+
+  test('아이디 중복 시 입력했던 이메일/휴대전화번호가 폼에 유지된다', async () => {
+    const username = `user_${rand()}`;
+    await signup(username);
+    const res = await signup(username, `${username}_second@test.com`, '010-5555-6666');
+    expect(res.status).toBe(409);
+    expect(res.text).toContain(`${username}_second`);
+    expect(res.text).toContain('5555');
+    expect(res.text).toContain('6666');
   });
 
   test('아이디 중복확인: 사용하지 않는 아이디는 available true', async () => {
@@ -122,7 +155,7 @@ describe('booking flow', () => {
     const username = `user_${rand()}`;
     const agent = request.agent(app);
     await signup(username);
-    const res = await agent.post('/login').send({ username, password: 'password123' });
+    const res = await agent.post('/login').send({ username, password: VALID_PASSWORD });
     expect(res.status).toBe(302);
     expect(res.headers['set-cookie']).toBeDefined();
   });
@@ -131,7 +164,7 @@ describe('booking flow', () => {
     const username = `user_${rand()}`;
     const agent = request.agent(app);
     await signup(username);
-    await agent.post('/login').send({ username, password: 'password123' });
+    await agent.post('/login').send({ username, password: VALID_PASSWORD });
 
     const res = await agent.post(`/showtimes/${showtimeId}/book`).send({ seatLabel: 'A1' });
     expect(res.status).toBe(302);
@@ -144,13 +177,13 @@ describe('booking flow', () => {
     const username1 = `dup1_${rand()}`;
     const agent1 = request.agent(app);
     await signup(username1);
-    await agent1.post('/login').send({ username: username1, password: 'password123' });
+    await agent1.post('/login').send({ username: username1, password: VALID_PASSWORD });
     await agent1.post(`/showtimes/${showtimeId}/book`).send({ seatLabel: 'B2' });
 
     const username2 = `dup2_${rand()}`;
     const agent2 = request.agent(app);
     await signup(username2);
-    await agent2.post('/login').send({ username: username2, password: 'password123' });
+    await agent2.post('/login').send({ username: username2, password: VALID_PASSWORD });
     const res = await agent2.post(`/showtimes/${showtimeId}/book`).send({ seatLabel: 'B2' });
 
     expect(res.status).toBe(409);
