@@ -8,11 +8,11 @@ async function main() {
   await prisma.movie.deleteMany();
 
   const movieData = [
-    { title: '오디세이', genre: '액션/모험', runningTimeMin: 141, posterUrl: '/posters/1.jpg' },
-    { title: '스파이더맨: 브랜드 뉴 데이', genre: '액션', runningTimeMin: 130, posterUrl: '/posters/2.jpg' },
-    { title: '경주기행', genre: '스릴러', runningTimeMin: 105, posterUrl: '/posters/3.jpg' },
-    { title: '오크 스트리트의 마지막 날', genre: '액션/코미디', runningTimeMin: 98, posterUrl: '/posters/4.jpg' },
-    { title: '호프', genre: '액션', runningTimeMin: 115, posterUrl: '/posters/5.jpg' },
+    { title: '오디세이', genre: '액션/모험', runningTimeMin: 172, posterUrl: '/posters/1.jpg' },
+    { title: '스파이더맨: 브랜드 뉴 데이', genre: '액션', runningTimeMin: 145, posterUrl: '/posters/2.jpg' },
+    { title: '경주기행', genre: '스릴러', runningTimeMin: 111, posterUrl: '/posters/3.jpg' },
+    { title: '오크 스트리트의 마지막 날', genre: '액션/코미디', runningTimeMin: 99, posterUrl: '/posters/4.jpg' },
+    { title: '호프', genre: '액션', runningTimeMin: 166, posterUrl: '/posters/5.jpg' },
   ];
 
   const movies = [];

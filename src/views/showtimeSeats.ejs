@@ -154,15 +154,23 @@
     document.getElementById('totalPriceText').textContent = totalPrice().toLocaleString() + '원';
 
     document.querySelectorAll('.seat:not(.booked)').forEach(function (el) {
-      el.classList.remove('selected', 'pending');
+      el.classList.remove('selected', 'pending', 'not-candidate');
     });
     selectedGroups.flat().forEach(function (label) {
       var el = seatEl(label);
       if (el) el.classList.add('selected');
     });
+    var hintEl = document.querySelector('.seat-hint');
     if (pendingAnchor) {
-      var el = seatEl(pendingAnchor.label);
-      if (el) el.classList.add('pending');
+      var anchorEl = seatEl(pendingAnchor.label);
+      if (anchorEl) anchorEl.classList.add('pending');
+      document.querySelectorAll('.seat:not(.booked):not(.selected):not(.pending)').forEach(function (el) {
+        var candidate = { row: Number(el.dataset.row), col: Number(el.dataset.col) };
+        if (!isAdjacent(pendingAnchor, candidate)) el.classList.add('not-candidate');
+      });
+      hintEl.textContent = pendingAnchor.label + '석과 짝을 이룰 바로 옆자리를 선택해주세요. (다시 클릭하면 취소)';
+    } else {
+      hintEl.textContent = '관람인원을 먼저 선택한 뒤 좌석을 클릭해주세요. 2명 이상은 옆자리끼리 붙여서 선택됩니다.';
     }
 
     var total = totalTickets();
