@@ -8,7 +8,7 @@
   <aside class="movie-sidebar">
     <% movies.forEach(function(m) { %>
       <a class="movie-sidebar-item<%= m.id === movie.id ? ' active' : '' %>"
-         href="/movies/<%= m.id %>?date=<%= selectedKey %>">
+         href="/movies/<%= m.id %>?date=<%= selectedKey %>" data-age-rating="<%= m.ageRating %>">
         <span class="age-badge age-<%= m.ageRating %>"><%= m.ageRating %></span>
         <span><%= m.title %></span>
       </a>
@@ -49,6 +49,20 @@
     <% } %>
   </section>
 </div>
+
+<%- include('partials/ageGateModal') %>
+<script>
+  document.querySelectorAll('.movie-sidebar-item').forEach(function (el) {
+    if (el.classList.contains('active')) return;
+    el.addEventListener('click', function (e) {
+      var rating = el.dataset.ageRating;
+      if (ageGateNeeded(rating)) {
+        e.preventDefault();
+        openAgeGate(rating, function () { window.location.href = el.href; });
+      }
+    });
+  });
+</script>
 
 <%- include('partials/footer') %>
 </body>
