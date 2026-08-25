@@ -10,21 +10,25 @@ authRouter.get('/signup', (_req, res) => {
 });
 
 authRouter.post('/signup', asyncHandler(async (req, res) => {
-  const { username, password, passwordConfirm } = req.body;
-  if (!username || !password || !passwordConfirm) {
+  const { username, email, password, passwordConfirm } = req.body;
+  if (!username || !email || !password || !passwordConfirm) {
     return res.status(400).render('signup', { error: '모든 항목을 입력해주세요.' });
   }
   if (password !== passwordConfirm) {
     return res.status(400).render('signup', { error: '비밀번호가 일치하지 않습니다.' });
   }
 
-  const existing = await prisma.user.findUnique({ where: { username } });
-  if (existing) {
+  const existingUsername = await prisma.user.findUnique({ where: { username } });
+  if (existingUsername) {
     return res.status(409).render('signup', { error: '이미 사용 중인 아이디입니다.' });
+  }
+  const existingEmail = await prisma.user.findUnique({ where: { email } });
+  if (existingEmail) {
+    return res.status(409).render('signup', { error: '이미 가입된 이메일입니다.' });
   }
 
   const passwordHash = await bcrypt.hash(password, 10);
-  await prisma.user.create({ data: { username, passwordHash } });
+  await prisma.user.create({ data: { username, email, passwordHash } });
   res.redirect('/login');
 }));
 
