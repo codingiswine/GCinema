@@ -3,15 +3,21 @@
     <img src="/gc-mark.png" alt="GCinema" class="brand-mark" />
     <span class="brand-name">GCinema</span>
   </a>
+  <p class="brand-tagline">Beyond Screens, Toward Connected Cinema</p>
 </header>
 <nav>
-  <a href="/movies">영화 목록</a>
-  <a href="/bookings">내 예매 내역</a>
-  <% if (userId) { %>
-    <form action="/logout" method="post" style="margin:0">
-      <button type="submit" style="padding:2px 8px">로그아웃</button>
-    </form>
-  <% } else { %>
-    <a href="/login">로그인</a>
-  <% } %>
+  <div class="nav-left">
+    <a href="/movies">영화 목록</a>
+    <a href="/support">고객센터</a>
+    <% if (userId) { %><a href="/bookings">마이페이지</a><% } %>
+  </div>
+  <div class="nav-right">
+    <% if (userId) { %>
+      <form action="/logout" method="post" style="margin:0">
+        <button type="submit" style="padding:2px 8px">로그아웃</button>
+      </form>
+    <% } else { %>
+      <a href="/login">로그인</a>
+    <% } %>
+  </div>
 </nav>

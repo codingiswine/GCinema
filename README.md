@@ -58,7 +58,8 @@ src/
     signup.ejs, login.ejs             # 회원가입(아이디 중복확인, 분할 입력 UI) / 로그인
     movies.ejs, movie.ejs              # 포스터 카드 목록 / 상영시간 목록
     showtimeSeats.ejs                   # SCREEN 바 + 좌석 그리드
-    bookings.ejs                         # 예매 내역
+    bookings.ejs                         # 예매 내역 (마이페이지)
+    support.ejs                           # 고객센터 안내
   public/
     style.css                # 전체 스타일
     gc-mark.png                # 헤더 로고 마크

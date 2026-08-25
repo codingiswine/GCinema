@@ -27,6 +27,7 @@ app.use((req, res, next) => {
 });
 
 app.get('/', (_req, res) => res.redirect('/movies'));
+app.get('/support', (_req, res) => res.render('support'));
 app.use(authRouter);
 app.use(moviesRouter);
 app.use(bookingsRouter);
