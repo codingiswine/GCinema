@@ -7,6 +7,11 @@
 <p><%= showtime.theaterName %> · <%= new Date(showtime.startAt).toLocaleString('ko-KR') %></p>
 <% if (error) { %><p class="error"><%= error %></p><% } %>
 
+<div class="screen-wrap">
+  <div class="screen-bar"></div>
+  <div class="screen-label">SCREEN</div>
+</div>
+
 <div class="seat-grid">
 <% for (let r = 0; r < showtime.rows; r++) { %>
   <div class="seat-row">
@@ -23,6 +28,11 @@
   </div>
 <% } %>
 </div>
-<p>회색 좌석은 이미 예매된 좌석입니다. 좌석을 클릭하면 바로 예매됩니다.</p>
+<div class="seat-legend">
+  <span><i class="seat-swatch available"></i> 선택 가능</span>
+  <span><i class="seat-swatch booked"></i> 예매 완료</span>
+</div>
+<p class="seat-hint">좌석을 클릭하면 바로 예매됩니다.</p>
+<%- include('partials/footer') %>
 </body>
 </html>

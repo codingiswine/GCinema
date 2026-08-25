@@ -26,8 +26,8 @@ async function main() {
   for (const movie of movies) {
     await prisma.showtime.createMany({
       data: [
-        { movieId: movie.id, theaterName: '1관', startAt: hoursFromNow(2), rows: 4, cols: 6 },
-        { movieId: movie.id, theaterName: '2관', startAt: hoursFromNow(5), rows: 4, cols: 6 },
+        { movieId: movie.id, theaterName: '리클라이너관 1', startAt: hoursFromNow(2), rows: 5, cols: 17 },
+        { movieId: movie.id, theaterName: '리클라이너관 2', startAt: hoursFromNow(5), rows: 5, cols: 17 },
       ],
     });
   }
