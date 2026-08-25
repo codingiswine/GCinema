@@ -34,6 +34,7 @@ body {
   gap: 0 12px; margin-bottom: 14px; font-size: 0.78rem; color: #777;
 }
 .footer-links span:not(:last-child) { border-right: 1px solid #ddd; padding-right: 12px; }
+.footer-links-strong { font-weight: 700; color: #555; }
 .footer-company { line-height: 1.6; }
 .footer-company p { margin: 0; }
 nav {
@@ -168,7 +169,6 @@ button:hover { background: #444; }
 }
 .seat-swatch.booked { background: #d5d5d5; border-color: #d5d5d5; }
 .seat-swatch.selected { background: #0f6e8c; }
-.seat-hint { text-align: center; color: #888; font-size: 0.85rem; margin-top: 6px; }
 
 .ticket-panel { border: 1px solid #ddd; border-radius: 10px; padding: 16px; background: #fff; margin-top: 8px; }
 .ticket-panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
