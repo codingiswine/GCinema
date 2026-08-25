@@ -1,8 +1,11 @@
 <nav>
   <a href="/movies">영화 목록</a>
   <a href="/bookings">내 예매 내역</a>
-  <a href="/login">로그인</a>
-  <form action="/logout" method="post" style="margin:0">
-    <button type="submit" style="padding:2px 8px">로그아웃</button>
-  </form>
+  <% if (userId) { %>
+    <form action="/logout" method="post" style="margin:0">
+      <button type="submit" style="padding:2px 8px">로그아웃</button>
+    </form>
+  <% } else { %>
+    <a href="/login">로그인</a>
+  <% } %>
 </nav>

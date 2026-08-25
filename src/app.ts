@@ -21,6 +21,11 @@ app.use(
   })
 );
 
+app.use((req, res, next) => {
+  res.locals.userId = req.session.userId;
+  next();
+});
+
 app.get('/', (_req, res) => res.redirect('/movies'));
 app.use(authRouter);
 app.use(moviesRouter);
