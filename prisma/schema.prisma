@@ -9,9 +9,8 @@ datasource db {
 
 model User {
   id           Int       @id @default(autoincrement())
-  email        String    @unique
+  username     String    @unique
   passwordHash String
-  name         String
   createdAt    DateTime  @default(now())
   bookings     Booking[]
 }
