@@ -40,6 +40,9 @@ nav {
 .nav-left, .nav-right { display: flex; align-items: center; gap: 16px; }
 nav a { color: #333; text-decoration: none; font-weight: 600; }
 nav a:hover { text-decoration: underline; }
+.breadcrumb { display: flex; align-items: center; gap: 6px; }
+.breadcrumb-sep { color: #aaa; font-weight: 400; }
+.breadcrumb-current { color: #333; font-weight: 600; }
 h1 { font-size: 1.4rem; }
 .card {
   border: 1px solid #ddd;

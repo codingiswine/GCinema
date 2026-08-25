@@ -53,7 +53,13 @@ bookingsRouter.get('/showtimes/:id', asyncHandler(async (req, res) => {
     booked: booked.has(label),
   }));
   const rows = Math.ceil(showtime.totalSeats / showtime.cols);
-  res.render('showtimeSeats', { showtime, seats, rows, prices: TICKET_PRICES });
+  res.render('showtimeSeats', {
+    showtime,
+    seats,
+    rows,
+    prices: TICKET_PRICES,
+    breadcrumb: ['영화 목록', '예매', '좌석 선택'],
+  });
 }));
 
 bookingsRouter.post('/showtimes/:id/book', requireLogin, asyncHandler(async (req, res) => {

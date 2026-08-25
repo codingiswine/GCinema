@@ -1,9 +1,39 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, TicketCategory } from '@prisma/client';
+import bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
 
 const DAYS_AHEAD = 7;
 const COLS = 14;
+const OCCUPANCY_RATIO = 0.3;
+
+// Mirrors seatLabels() in src/routes/bookings.ts — kept as a small local
+// copy so the seed script doesn't depend on route module internals.
+function seatLabels(totalSeats: number, cols: number): string[] {
+  const labels: string[] = [];
+  let remaining = totalSeats;
+  let r = 0;
+  while (remaining > 0) {
+    const rowLetter = String.fromCharCode(65 + r);
+    const seatsInRow = Math.min(cols, remaining);
+    for (let c = 1; c <= seatsInRow; c++) {
+      labels.push(`${rowLetter}${c}`);
+    }
+    remaining -= seatsInRow;
+    r++;
+  }
+  return labels;
+}
+
+function pickRandomSeats(totalSeats: number, cols: number, ratio: number): string[] {
+  const all = seatLabels(totalSeats, cols);
+  const count = Math.round(all.length * ratio);
+  for (let i = all.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [all[i], all[j]] = [all[j], all[i]];
+  }
+  return all.slice(0, count);
+}
 
 // 박스오피스 1~2위인 오디세이/스파이더맨은 같은 시간표(오디세이 심야 포함)를 쓴다.
 const TOP_MOVIE_TIMES = ['10:35', '14:00', '17:15', '20:35', '23:50'];
@@ -130,6 +160,19 @@ async function main() {
   await prisma.showtime.deleteMany();
   await prisma.movie.deleteMany();
 
+  // Owns the randomly pre-filled seats below so the demo doesn't show every
+  // hall as completely empty. Not meant to be logged into.
+  const seedUser = await prisma.user.upsert({
+    where: { username: 'seed_seat_filler' },
+    update: {},
+    create: {
+      username: 'seed_seat_filler',
+      email: 'seed_seat_filler@internal.local',
+      phone: '010-0000-0001',
+      passwordHash: await bcrypt.hash(Math.random().toString(36), 10),
+    },
+  });
+
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
@@ -166,9 +209,20 @@ async function main() {
       }
     }
     await prisma.showtime.createMany({ data: showtimeData });
+
+    const createdShowtimes = await prisma.showtime.findMany({ where: { movieId: movie.id } });
+    const bookingData: { showtimeId: number; seatLabel: string; userId: number; category: TicketCategory; price: number }[] = [];
+    for (const st of createdShowtimes) {
+      pickRandomSeats(st.totalSeats, st.cols, OCCUPANCY_RATIO).forEach((seatLabel) => {
+        bookingData.push({ showtimeId: st.id, seatLabel, userId: seedUser.id, category: 'ADULT', price: 16000 });
+      });
+    }
+    if (bookingData.length > 0) {
+      await prisma.booking.createMany({ data: bookingData });
+    }
   }
 
-  console.log(`시딩 완료: 영화 ${movieData.length}개, ${DAYS_AHEAD}일치 상영시간표`);
+  console.log(`시딩 완료: 영화 ${movieData.length}개, ${DAYS_AHEAD}일치 상영시간표, 회차별 좌석 ${Math.round(OCCUPANCY_RATIO * 100)}% 랜덤 예약`);
 }
 
 main()
