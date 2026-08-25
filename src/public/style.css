@@ -120,7 +120,7 @@ button:hover { background: #444; }
   background: #fff;
   color: #0f6e8c;
 }
-.seat:hover { background: #e6f3f7; }
+.seat:hover, .seat.hover-preview { background: #e6f3f7; }
 .seat.booked { background: #d5d5d5; border-color: #d5d5d5; color: #8a8a8a; cursor: not-allowed; }
 .seat.selected { background: #0f6e8c; color: #fff; }
 

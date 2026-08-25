@@ -265,6 +265,27 @@
       }
       render();
     });
+
+    el.addEventListener('mouseenter', function () {
+      var label = el.dataset.label;
+      var inGroup = selectedGroups.some(function (g) { return g.indexOf(label) !== -1; });
+      if (inGroup) return;
+
+      el.classList.add('hover-preview');
+      var remaining = totalTickets() - selectedSeatCount();
+      if (remaining >= 2) {
+        var partner = findAdjacentPartner(Number(el.dataset.row), Number(el.dataset.col));
+        if (partner) {
+          var partnerEl = seatEl(partner);
+          if (partnerEl) partnerEl.classList.add('hover-preview');
+        }
+      }
+    });
+    el.addEventListener('mouseleave', function () {
+      document.querySelectorAll('.seat.hover-preview').forEach(function (s) {
+        s.classList.remove('hover-preview');
+      });
+    });
   });
 
   document.getElementById('confirmBookBtn').addEventListener('click', function () {
