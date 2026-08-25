@@ -253,3 +253,24 @@ button:hover { background: #444; }
 .showtime-btn:hover { border-color: #0f6e8c; }
 .showtime-time { font-weight: 700; font-size: 1.05rem; }
 .showtime-seats { font-size: 0.78rem; color: #888; }
+
+.detail-hero {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background-size: cover;
+  background-position: center;
+  border-radius: 10px;
+  margin-bottom: 16px;
+}
+.detail-info { display: flex; flex-direction: column; gap: 10px; }
+.detail-title-row { display: flex; align-items: center; gap: 10px; }
+.detail-title-row h1 { margin: 0; font-size: 1.3rem; }
+.detail-meta { margin: 0; color: #777; font-size: 0.9rem; }
+.detail-stats { font-size: 0.85rem; }
+.detail-stats .movie-stats-mark { width: 15px; height: 15px; }
+.detail-divider { border: none; border-top: 1px solid #ddd; margin: 4px 0; }
+.detail-synopsis { white-space: pre-line; line-height: 1.6; color: #333; margin: 0 0 6px; }
+.detail-book-btn {
+  display: block; text-align: center; margin-top: 6px; text-decoration: none;
+  color: #fff; font-weight: 600; font-size: 1rem; border-radius: 6px;
+}

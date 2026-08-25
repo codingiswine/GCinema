@@ -58,6 +58,7 @@ src/
     partials/{head,nav,footer}.ejs   # 공통 head, GCinema 브랜드 헤더, 하단 주소 푸터
     signup.ejs, login.ejs             # 회원가입(아이디 중복확인, 분할 입력 UI) / 로그인
     movies.ejs, movie.ejs              # 포스터 카드 목록 / 통합 상영시간표(영화·날짜 전환)
+    movieDetail.ejs                     # 영화 상세 설명(포스터 클릭 시 진입)
     showtimeSeats.ejs                   # SCREEN 바 + 좌석 그리드
     bookings.ejs                         # 예매 내역 (마이페이지)
     support.ejs                           # 고객센터 안내
@@ -65,6 +66,7 @@ src/
     style.css                # 전체 스타일
     gc-mark.png                # 헤더 로고 마크
     posters/1~5.jpg              # 영화 포스터 이미지
+    details/1~4.webp             # 영화 상세페이지 배경 이미지
 test/booking.test.ts         # 회원가입/로그인/예매/중복 검증 스모크 테스트 (17개)
 docker-compose.yml            # PostgreSQL 컨테이너
 ```
@@ -99,3 +101,4 @@ docker-compose.yml            # PostgreSQL 컨테이너
 - **좌석 페어링 규칙**: 2명 단위는 좌석 하나를 클릭하면 옆자리까지 한 번에 함께 선택되고(호버 시 옆자리까지 미리보기), 홀수 인원의 마지막 1명은 좌석 1개만 선택
 - **통합 상영시간표**: 영화별 연령등급 배지, 상영관·좌석수(1관 84석/2관 84석/3관 42석/4관 67석), 날짜 스트립으로 요일까지 선택 가능한 화면으로 개편
 - **박스오피스 랭킹 카드**: 영화 목록에 순위(1~4위), 포스터 위 순위 숫자, GCinema 마크와 함께 만족도·예매율·누적 관객수를 보여주고 카드마다 예매하기 버튼 배치
+- **영화 상세 페이지**: 포스터 클릭 시 영화별 배경 이미지·줄거리·통계와 함께 날짜 스트립·예매하기 버튼을 보여주는 상세 화면으로 이동(목록의 예매하기 버튼은 상영시간표로 바로 이동)

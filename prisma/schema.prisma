@@ -24,6 +24,8 @@ model Movie {
   runningTimeMin      Int
   ageRating           String
   posterUrl           String?
+  detailImageUrl      String?
+  description         String     @default("")
   satisfactionPercent Int
   bookingRatePercent  Float
   cumulativeViewers   String

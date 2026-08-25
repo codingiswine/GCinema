@@ -7,7 +7,7 @@
 <div class="movie-list">
 <% movies.forEach(function(movie, i) { %>
   <div class="movie-card">
-    <a class="movie-poster-link" href="/movies/<%= movie.id %>">
+    <a class="movie-poster-link" href="/movies/<%= movie.id %>/detail">
       <% if (movie.posterUrl) { %>
         <img class="movie-poster" src="<%= movie.posterUrl %>" alt="<%= movie.title %> 포스터" />
       <% } %>

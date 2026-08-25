@@ -13,9 +13,36 @@ function dateKey(d: Date): string {
   return `${y}-${m}-${day}`;
 }
 
+function buildDateOptions() {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(today);
+    d.setDate(d.getDate() + i);
+    return {
+      key: dateKey(d),
+      day: d.getDate(),
+      weekday: i === 0 ? '오늘' : WEEKDAYS[d.getDay()],
+      isSat: d.getDay() === 6,
+      isSun: d.getDay() === 0,
+    };
+  });
+}
+
 moviesRouter.get('/movies', asyncHandler(async (_req, res) => {
   const movies = await prisma.movie.findMany({ orderBy: { id: 'asc' } });
   res.render('movies', { movies });
+}));
+
+// Detail page: hero image + synopsis, reached by clicking a poster. Shows
+// the date strip too so the reservation button always has a date selected.
+moviesRouter.get('/movies/:id/detail', asyncHandler(async (req, res) => {
+  const movieId = Number(req.params.id);
+  const movie = await prisma.movie.findUnique({ where: { id: movieId } });
+  if (!movie) return res.status(404).send('영화를 찾을 수 없습니다.');
+
+  const dateOptions = buildDateOptions();
+  res.render('movieDetail', { movie, dateOptions });
 }));
 
 // Unified schedule page: pick a movie from the sidebar and a date from the
@@ -29,21 +56,7 @@ moviesRouter.get('/movies/:id', asyncHandler(async (req, res) => {
   ]);
   if (!movie) return res.status(404).send('영화를 찾을 수 없습니다.');
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  const dateOptions = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(today);
-    d.setDate(d.getDate() + i);
-    return {
-      key: dateKey(d),
-      day: d.getDate(),
-      weekday: i === 0 ? '오늘' : WEEKDAYS[d.getDay()],
-      isSat: d.getDay() === 6,
-      isSun: d.getDay() === 0,
-    };
-  });
-
+  const dateOptions = buildDateOptions();
   const requestedKey = typeof req.query.date === 'string' ? req.query.date : '';
   const selectedKey = dateOptions.some((d) => d.key === requestedKey) ? requestedKey : dateOptions[0].key;
   const [sy, sm, sd] = selectedKey.split('-').map(Number);
