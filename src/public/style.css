@@ -123,8 +123,6 @@ button:hover { background: #444; }
 .seat:hover { background: #e6f3f7; }
 .seat.booked { background: #d5d5d5; border-color: #d5d5d5; color: #8a8a8a; cursor: not-allowed; }
 .seat.selected { background: #0f6e8c; color: #fff; }
-.seat.pending { background: #ffcf6b; border-color: #e0a800; color: #6b4c00; }
-.seat.not-candidate { opacity: 0.3; }
 
 .seat-legend { display: flex; justify-content: center; gap: 20px; margin-top: 18px; font-size: 0.85rem; color: #444; }
 .seat-legend span { display: flex; align-items: center; gap: 6px; }

@@ -71,7 +71,7 @@
   <span><i class="seat-swatch selected"></i> 선택됨</span>
   <span><i class="seat-swatch booked"></i> 예매 완료</span>
 </div>
-<p class="seat-hint">관람인원을 먼저 선택한 뒤 좌석을 클릭해주세요. 2명 이상은 옆자리끼리 붙여서 선택됩니다.</p>
+<p class="seat-hint">관람인원을 먼저 선택한 뒤 좌석을 클릭해주세요. 2인 1조는 클릭한 좌석의 옆자리가 함께 선택되고, 홀수 인원의 마지막 1명은 좌석 1개만 선택됩니다.</p>
 
 <div class="booking-summary">
   <span id="selectedCountText">선택 좌석 0 / 0</span>
@@ -118,15 +118,14 @@
   var PRICES = <%- JSON.stringify(prices) %>;
   var SHOWTIME_ID = <%= showtime.id %>;
   var counts = { ADULT: 0, TEEN: 0, SENIOR: 0, DISABLED: 0 };
-  var selectedGroups = []; // array of arrays of seat labels
-  var pendingAnchor = null; // {label, row, col}
+  var selectedGroups = []; // array of arrays of seat labels (pairs or a single leftover seat)
   var errorEl = document.getElementById('bookError');
 
   function totalTickets() {
     return counts.ADULT + counts.TEEN + counts.SENIOR + counts.DISABLED;
   }
   function selectedSeatCount() {
-    return selectedGroups.reduce(function (n, g) { return n + g.length; }, 0) + (pendingAnchor ? 1 : 0);
+    return selectedGroups.reduce(function (n, g) { return n + g.length; }, 0);
   }
   function totalPrice() {
     return counts.ADULT * PRICES.ADULT + counts.TEEN * PRICES.TEEN +
@@ -144,6 +143,21 @@
   function seatEl(label) {
     return document.querySelector('.seat[data-label="' + label + '"]');
   }
+  function seatAt(row, col) {
+    return document.querySelector('.seat[data-row="' + row + '"][data-col="' + col + '"]');
+  }
+  function isSeatFree(el) {
+    if (!el || el.classList.contains('booked')) return false;
+    var label = el.dataset.label;
+    return selectedGroups.every(function (g) { return g.indexOf(label) === -1; });
+  }
+  function findAdjacentPartner(row, col) {
+    var right = seatAt(row, col + 1);
+    if (isSeatFree(right)) return right.dataset.label;
+    var left = seatAt(row, col - 1);
+    if (isSeatFree(left)) return left.dataset.label;
+    return null;
+  }
 
   function render() {
     Object.keys(counts).forEach(function (cat) {
@@ -154,24 +168,12 @@
     document.getElementById('totalPriceText').textContent = totalPrice().toLocaleString() + '원';
 
     document.querySelectorAll('.seat:not(.booked)').forEach(function (el) {
-      el.classList.remove('selected', 'pending', 'not-candidate');
+      el.classList.remove('selected');
     });
     selectedGroups.flat().forEach(function (label) {
       var el = seatEl(label);
       if (el) el.classList.add('selected');
     });
-    var hintEl = document.querySelector('.seat-hint');
-    if (pendingAnchor) {
-      var anchorEl = seatEl(pendingAnchor.label);
-      if (anchorEl) anchorEl.classList.add('pending');
-      document.querySelectorAll('.seat:not(.booked):not(.selected):not(.pending)').forEach(function (el) {
-        var candidate = { row: Number(el.dataset.row), col: Number(el.dataset.col) };
-        if (!isAdjacent(pendingAnchor, candidate)) el.classList.add('not-candidate');
-      });
-      hintEl.textContent = pendingAnchor.label + '석과 짝을 이룰 바로 옆자리를 선택해주세요. (다시 클릭하면 취소)';
-    } else {
-      hintEl.textContent = '관람인원을 먼저 선택한 뒤 좌석을 클릭해주세요. 2명 이상은 옆자리끼리 붙여서 선택됩니다.';
-    }
 
     var total = totalTickets();
     var confirmBtn = document.getElementById('confirmBookBtn');
@@ -180,7 +182,6 @@
 
   function resetSelection() {
     selectedGroups = [];
-    pendingAnchor = null;
     clearError();
   }
 
@@ -224,10 +225,6 @@
     render();
   });
 
-  function isAdjacent(a, b) {
-    return a.row === b.row && Math.abs(a.col - b.col) === 1;
-  }
-
   document.querySelectorAll('.seat:not(.booked)').forEach(function (el) {
     el.addEventListener('click', function () {
       clearError();
@@ -241,13 +238,7 @@
         return;
       }
 
-      // toggle off: clicking the pending anchor
-      if (pendingAnchor && pendingAnchor.label === label) {
-        pendingAnchor = null;
-        render();
-        return;
-      }
-      // toggle off: clicking a seat that's part of a confirmed group
+      // toggle off: clicking a seat that's part of an already-selected group
       for (var i = 0; i < selectedGroups.length; i++) {
         if (selectedGroups[i].indexOf(label) !== -1) {
           selectedGroups.splice(i, 1);
@@ -261,23 +252,16 @@
         return;
       }
 
-      var seat = { label: label, row: row, col: col };
-
-      if (pendingAnchor) {
-        if (isAdjacent(pendingAnchor, seat)) {
-          selectedGroups.push([pendingAnchor.label, label]);
-          pendingAnchor = null;
-        } else {
-          showError('좌석은 옆자리끼리 붙여서 선택해주세요.');
+      var remaining = total - selectedSeatCount();
+      if (remaining === 1) {
+        selectedGroups.push([label]);
+      } else {
+        var partner = findAdjacentPartner(row, col);
+        if (!partner) {
+          showError('옆자리에 빈 좌석이 없어 짝을 지을 수 없습니다. 다른 좌석을 선택해주세요.');
           return;
         }
-      } else {
-        var remaining = total - selectedSeatCount();
-        if (remaining === 1) {
-          selectedGroups.push([label]);
-        } else {
-          pendingAnchor = seat;
-        }
+        selectedGroups.push([label, partner]);
       }
       render();
     });
