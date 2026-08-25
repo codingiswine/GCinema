@@ -114,13 +114,11 @@
   </div>
 </div>
 
-<%- include('partials/ageGateModal') %>
-
 <script>
   var PRICES = <%- JSON.stringify(prices) %>;
   var SHOWTIME_ID = <%= showtime.id %>;
-  var MOVIE_AGE_RATING = <%- JSON.stringify(showtime.movie.ageRating) %>;
   var counts = { ADULT: 0, TEEN: 0, SENIOR: 0, DISABLED: 0 };
+  var acknowledged = { SENIOR: false, DISABLED: false };
   var selectedGroups = []; // array of arrays of seat labels (pairs or a single leftover seat)
   var errorEl = document.getElementById('bookError');
 
@@ -189,7 +187,7 @@
   }
 
   function changeCount(category, delta) {
-    if (delta > 0 && (category === 'SENIOR' || category === 'DISABLED')) {
+    if (delta > 0 && (category === 'SENIOR' || category === 'DISABLED') && !acknowledged[category]) {
       var modalId = category === 'SENIOR' ? 'seniorModal' : 'disabledModal';
       document.getElementById(modalId).style.display = 'flex';
       return;
@@ -215,6 +213,7 @@
   document.querySelectorAll('.modal-confirm').forEach(function (btn) {
     btn.addEventListener('click', function () {
       var category = btn.dataset.confirm;
+      acknowledged[category] = true;
       counts[category] = counts[category] + 1;
       resetSelection();
       render();
@@ -317,10 +316,6 @@
 
   document.getElementById('confirmBookBtn').addEventListener('click', function () {
     clearError();
-    if (ageGateNeeded(MOVIE_AGE_RATING)) {
-      openAgeGate(MOVIE_AGE_RATING, submitBooking);
-      return;
-    }
     submitBooking();
   });
 
