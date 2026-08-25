@@ -265,11 +265,23 @@ button:hover { background: #444; }
 .detail-topbar-left, .detail-topbar-right { display: flex; align-items: center; gap: 8px; }
 .topbar-icon-btn {
   display: flex; align-items: center; justify-content: center;
-  width: 32px; height: 32px; border-radius: 50%; border: 1px solid #ddd;
-  background: #fff; color: #333; font-size: 1.1rem; text-decoration: none; cursor: pointer;
+  width: 34px; height: 34px; border-radius: 50%; border: 1px solid #e2e2e2;
+  background: #fff; color: #444; text-decoration: none; cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06); transition: border-color 0.15s, color 0.15s;
 }
-.topbar-icon-btn:hover { border-color: #999; }
-.topbar-icon-btn.liked { color: #e63950; border-color: #e63950; }
+.topbar-icon-btn:hover { border-color: #aaa; color: #111; }
+.topbar-icon-btn .heart-filled { display: none; }
+.topbar-icon-btn.liked { color: #e63950; border-color: #f3c1c8; }
+.topbar-icon-btn.liked .heart-outline { display: none; }
+.topbar-icon-btn.liked .heart-filled { display: block; }
+
+.toast {
+  position: fixed; left: 50%; bottom: 32px; transform: translate(-50%, 8px);
+  background: rgba(20, 20, 20, 0.9); color: #fff; padding: 9px 16px; border-radius: 20px;
+  font-size: 0.85rem; opacity: 0; transition: opacity 0.2s, transform 0.2s; z-index: 200;
+  max-width: 90vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
 
 .detail-hero {
   display: block;
