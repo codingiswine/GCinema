@@ -4,6 +4,17 @@
 <body>
 <%- include('partials/nav') %>
 
+<div class="detail-topbar">
+  <div class="detail-topbar-left">
+    <button type="button" class="topbar-icon-btn" onclick="history.back()" aria-label="뒤로가기">&#8249;</button>
+    <a class="topbar-icon-btn" href="/movies" aria-label="홈">&#8962;</a>
+  </div>
+  <div class="detail-topbar-right">
+    <button type="button" class="topbar-icon-btn" id="shareBtn" aria-label="공유">&#8683;</button>
+    <button type="button" class="topbar-icon-btn" id="likeBtn" aria-label="좋아요">&#9825;</button>
+  </div>
+</div>
+
 <% if (movie.detailImageUrl) { %>
   <img class="detail-hero" src="<%= movie.detailImageUrl %>" alt="<%= movie.title %> 상세 이미지" />
 <% } %>
@@ -13,7 +24,8 @@
     <h1><%= movie.title %></h1>
     <span class="age-badge age-<%= movie.ageRating %>"><%= movie.ageRating %></span>
   </div>
-  <p class="detail-meta"><%= movie.runningTimeMin %>분 &nbsp;|&nbsp; <%= movie.genre %></p>
+  <% const rtH = Math.floor(movie.runningTimeMin / 60); const rtM = movie.runningTimeMin % 60; %>
+  <p class="detail-meta"><%= rtH %>시간 <%= rtM %>분 &nbsp;|&nbsp; <%= movie.genre %></p>
 
   <p class="movie-stats detail-stats">
     <img class="movie-stats-mark" src="/gc-mark.png" alt="" />
@@ -37,5 +49,20 @@
 </div>
 
 <%- include('partials/footer') %>
+<script>
+  document.getElementById('shareBtn').addEventListener('click', async function () {
+    const url = location.href;
+    if (navigator.share) {
+      try { await navigator.share({ title: document.title, url }); } catch (e) { /* user cancelled */ }
+    } else if (navigator.clipboard) {
+      try { await navigator.clipboard.writeText(url); alert('링크가 복사되었습니다.'); } catch (e) { /* ignore */ }
+    }
+  });
+  document.getElementById('likeBtn').addEventListener('click', function () {
+    var btn = document.getElementById('likeBtn');
+    var liked = btn.classList.toggle('liked');
+    btn.innerHTML = liked ? '&#9829;' : '&#9825;';
+  });
+</script>
 </body>
 </html>

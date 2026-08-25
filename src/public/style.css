@@ -254,22 +254,39 @@ button:hover { background: #444; }
 .showtime-time { font-weight: 700; font-size: 1.05rem; }
 .showtime-seats { font-size: 0.78rem; color: #888; }
 
+.detail-topbar {
+  display: flex; justify-content: space-between; align-items: center;
+  max-width: 440px; margin: 0 auto 10px;
+}
+.detail-topbar-left, .detail-topbar-right { display: flex; align-items: center; gap: 8px; }
+.topbar-icon-btn {
+  display: flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px; border-radius: 50%; border: 1px solid #ddd;
+  background: #fff; color: #333; font-size: 1.1rem; text-decoration: none; cursor: pointer;
+}
+.topbar-icon-btn:hover { border-color: #999; }
+.topbar-icon-btn.liked { color: #e63950; border-color: #e63950; }
+
 .detail-hero {
   display: block;
   width: 100%;
-  max-width: 360px;
+  max-width: 440px;
   margin: 0 auto 16px;
   border-radius: 10px;
 }
-.detail-info { display: flex; flex-direction: column; gap: 10px; }
-.detail-title-row { display: flex; align-items: center; gap: 10px; }
+.detail-info {
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+  max-width: 440px; margin: 0 auto; text-align: center;
+}
+.detail-title-row { display: flex; align-items: center; justify-content: center; gap: 10px; }
 .detail-title-row h1 { margin: 0; font-size: 1.3rem; }
 .detail-meta { margin: 0; color: #777; font-size: 0.9rem; }
-.detail-stats { font-size: 0.85rem; }
+.detail-stats { font-size: 0.85rem; justify-content: center; }
 .detail-stats .movie-stats-mark { width: 15px; height: 15px; }
-.detail-divider { border: none; border-top: 1px solid #ddd; margin: 4px 0; }
+.detail-divider { border: none; border-top: 1px solid #ddd; margin: 4px 0; width: 100%; }
 .detail-synopsis { white-space: pre-line; line-height: 1.6; color: #333; margin: 0 0 6px; }
+.detail-info .date-strip { justify-content: center; width: 100%; }
 .detail-book-btn {
-  display: block; text-align: center; margin-top: 6px; text-decoration: none;
+  display: block; width: 100%; text-align: center; margin-top: 6px; text-decoration: none;
   color: #fff; font-weight: 600; font-size: 1rem; border-radius: 6px;
 }
