@@ -10,10 +10,10 @@
 <nav>
   <div class="nav-left">
     <a href="/movies">영화 목록</a>
-    <% if (userId) { %><a href="/bookings">마이페이지</a><% } %>
   </div>
   <div class="nav-right">
     <% if (userId) { %>
+      <a href="/bookings">마이페이지</a>
       <form action="/logout" method="post" style="margin:0">
         <button type="submit" style="padding:2px 8px">로그아웃</button>
       </form>
