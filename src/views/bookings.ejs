@@ -7,7 +7,7 @@
 <% bookings.forEach(function(b) { %>
   <div class="card">
     <strong><%= b.showtime.movie.title %></strong>
-    <p><%= b.showtime.theaterName %> · <%= new Date(b.showtime.startAt).toLocaleString('ko-KR') %> · 좌석 <%= b.seatLabel %></p>
+    <p><%= b.showtime.theaterName %> · <%= new Date(b.showtime.startAt).toLocaleString('ko-KR') %> · 좌석 <%= b.seatLabel %> · <%= categoryLabels[b.category] %> <%= b.price.toLocaleString() %>원</p>
   </div>
 <% }) %>
 <% if (bookings.length === 0) { %><p>예매 내역이 없습니다.</p><% } %>

@@ -1,3 +1,6 @@
+-- CreateEnum
+CREATE TYPE "TicketCategory" AS ENUM ('ADULT', 'TEEN', 'SENIOR', 'DISABLED');
+
 -- CreateTable
 CREATE TABLE "User" (
     "id" SERIAL NOT NULL,
@@ -40,6 +43,8 @@ CREATE TABLE "Booking" (
     "userId" INTEGER NOT NULL,
     "showtimeId" INTEGER NOT NULL,
     "seatLabel" TEXT NOT NULL,
+    "category" "TicketCategory" NOT NULL,
+    "price" INTEGER NOT NULL,
     "bookedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "Booking_pkey" PRIMARY KEY ("id")

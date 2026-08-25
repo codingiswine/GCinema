@@ -38,14 +38,23 @@ model Showtime {
   bookings    Booking[]
 }
 
+enum TicketCategory {
+  ADULT
+  TEEN
+  SENIOR
+  DISABLED
+}
+
 model Booking {
-  id         Int      @id @default(autoincrement())
-  user       User     @relation(fields: [userId], references: [id])
+  id         Int            @id @default(autoincrement())
+  user       User           @relation(fields: [userId], references: [id])
   userId     Int
-  showtime   Showtime @relation(fields: [showtimeId], references: [id])
+  showtime   Showtime       @relation(fields: [showtimeId], references: [id])
   showtimeId Int
   seatLabel  String
-  bookedAt   DateTime @default(now())
+  category   TicketCategory
+  price      Int
+  bookedAt   DateTime       @default(now())
 
   @@unique([showtimeId, seatLabel])
 }

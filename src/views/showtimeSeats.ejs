@@ -5,7 +5,48 @@
 <%- include('partials/nav') %>
 <h1><%= showtime.movie.title %></h1>
 <p><%= showtime.theaterName %> · <%= new Date(showtime.startAt).toLocaleString('ko-KR') %></p>
-<% if (error) { %><p class="error"><%= error %></p><% } %>
+<p id="bookError" class="error" style="display:none;"></p>
+
+<div class="ticket-panel">
+  <div class="ticket-panel-header">
+    <h2>관람인원선택</h2>
+    <button type="button" id="resetBtn" class="btn-secondary">초기화</button>
+  </div>
+  <div class="ticket-types">
+    <div class="ticket-type">
+      <span class="ticket-type-label">성인<br><small><%= prices.ADULT.toLocaleString() %>원</small></span>
+      <div class="counter">
+        <button type="button" class="counter-btn" data-category="ADULT" data-delta="-1">-</button>
+        <span class="counter-value" id="count-ADULT">0</span>
+        <button type="button" class="counter-btn" data-category="ADULT" data-delta="1">+</button>
+      </div>
+    </div>
+    <div class="ticket-type">
+      <span class="ticket-type-label">청소년<br><small><%= prices.TEEN.toLocaleString() %>원</small></span>
+      <div class="counter">
+        <button type="button" class="counter-btn" data-category="TEEN" data-delta="-1">-</button>
+        <span class="counter-value" id="count-TEEN">0</span>
+        <button type="button" class="counter-btn" data-category="TEEN" data-delta="1">+</button>
+      </div>
+    </div>
+    <div class="ticket-type">
+      <span class="ticket-type-label">경로<br><small><%= prices.SENIOR.toLocaleString() %>원</small></span>
+      <div class="counter">
+        <button type="button" class="counter-btn" data-category="SENIOR" data-delta="-1">-</button>
+        <span class="counter-value" id="count-SENIOR">0</span>
+        <button type="button" class="counter-btn" id="seniorPlusBtn" data-category="SENIOR" data-delta="1">+</button>
+      </div>
+    </div>
+    <div class="ticket-type">
+      <span class="ticket-type-label">우대<br><small><%= prices.DISABLED.toLocaleString() %>원</small></span>
+      <div class="counter">
+        <button type="button" class="counter-btn" data-category="DISABLED" data-delta="-1">-</button>
+        <span class="counter-value" id="count-DISABLED">0</span>
+        <button type="button" class="counter-btn" id="disabledPlusBtn" data-category="DISABLED" data-delta="1">+</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <div class="screen-wrap">
   <div class="screen-bar"></div>
@@ -15,14 +56,11 @@
 <div class="seat-grid">
 <% for (let r = 0; r < showtime.rows; r++) { %>
   <div class="seat-row">
-  <% seats.slice(r * showtime.cols, r * showtime.cols + showtime.cols).forEach(function(seat) { %>
+  <% seats.slice(r * showtime.cols, r * showtime.cols + showtime.cols).forEach(function(seat, c) { %>
     <% if (seat.booked) { %>
       <div class="seat booked"><%= seat.label %></div>
     <% } else { %>
-      <form action="/showtimes/<%= showtime.id %>/book" method="post" style="margin:0">
-        <input type="hidden" name="seatLabel" value="<%= seat.label %>" />
-        <button type="submit" class="seat"><%= seat.label %></button>
-      </form>
+      <button type="button" class="seat" data-row="<%= r %>" data-col="<%= c %>" data-label="<%= seat.label %>"><%= seat.label %></button>
     <% } %>
   <% }) %>
   </div>
@@ -30,9 +68,240 @@
 </div>
 <div class="seat-legend">
   <span><i class="seat-swatch available"></i> 선택 가능</span>
+  <span><i class="seat-swatch selected"></i> 선택됨</span>
   <span><i class="seat-swatch booked"></i> 예매 완료</span>
 </div>
-<p class="seat-hint">좌석을 클릭하면 바로 예매됩니다.</p>
+<p class="seat-hint">관람인원을 먼저 선택한 뒤 좌석을 클릭해주세요. 2명 이상은 옆자리끼리 붙여서 선택됩니다.</p>
+
+<div class="booking-summary">
+  <span id="selectedCountText">선택 좌석 0 / 0</span>
+  <span id="totalPriceText">0원</span>
+  <button type="button" id="confirmBookBtn" class="btn-primary" disabled>예매하기</button>
+</div>
+
+<!-- 경로 안내 팝업 -->
+<div id="seniorModal" class="modal-overlay" style="display:none;">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span>알림</span>
+      <button type="button" class="modal-close" data-modal="seniorModal">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p>◆ 경로 : 만 65세 이상(신분증)</p>
+      <p>경로요금은 만65세 이상 고객에게만 적용되며, 상영관 입장 시 본인신분증을 제시해 주시기 바랍니다(*미지참시 입장 제한)</p>
+      <p>*경로선택 시 추가 할인이 제한될 수 있습니다</p>
+    </div>
+    <button type="button" class="modal-confirm" data-confirm="SENIOR">확인</button>
+  </div>
+</div>
+
+<!-- 우대 안내 팝업 -->
+<div id="disabledModal" class="modal-overlay" style="display:none;">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span>알림</span>
+      <button type="button" class="modal-close" data-modal="disabledModal">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p>※만 65세이상 고객님께서는 [경로]발권 부탁드립니다(*지점별 상이)</p>
+      <p>◆ 우대요금은 장애인 고객에게 적용되며, 상영관 입장 시 본인확인 증빙서류를 제시해 주시기 바랍니다. (미지참 시 입장 제한)</p>
+      <p>- 장애인: 복지카드<br>- 국가유공자: 국가유공자증</p>
+      <p>위 항목 외 지점별 우대요금 추가적용 대상은 직원확인 후 발권이 가능합니다<br>
+      *우대선택 시 추가 할인이 제한될 수 있습니다.<br>
+      *국가유공자증에 한하며, 국가유공자 유족증 등은 할인이 불가합니다.</p>
+    </div>
+    <button type="button" class="modal-confirm" data-confirm="DISABLED">확인</button>
+  </div>
+</div>
+
+<script>
+  var PRICES = <%- JSON.stringify(prices) %>;
+  var SHOWTIME_ID = <%= showtime.id %>;
+  var counts = { ADULT: 0, TEEN: 0, SENIOR: 0, DISABLED: 0 };
+  var selectedGroups = []; // array of arrays of seat labels
+  var pendingAnchor = null; // {label, row, col}
+  var errorEl = document.getElementById('bookError');
+
+  function totalTickets() {
+    return counts.ADULT + counts.TEEN + counts.SENIOR + counts.DISABLED;
+  }
+  function selectedSeatCount() {
+    return selectedGroups.reduce(function (n, g) { return n + g.length; }, 0) + (pendingAnchor ? 1 : 0);
+  }
+  function totalPrice() {
+    return counts.ADULT * PRICES.ADULT + counts.TEEN * PRICES.TEEN +
+      counts.SENIOR * PRICES.SENIOR + counts.DISABLED * PRICES.DISABLED;
+  }
+
+  function showError(msg) {
+    errorEl.textContent = msg;
+    errorEl.style.display = '';
+  }
+  function clearError() {
+    errorEl.style.display = 'none';
+  }
+
+  function seatEl(label) {
+    return document.querySelector('.seat[data-label="' + label + '"]');
+  }
+
+  function render() {
+    Object.keys(counts).forEach(function (cat) {
+      document.getElementById('count-' + cat).textContent = counts[cat];
+    });
+    document.getElementById('selectedCountText').textContent =
+      '선택 좌석 ' + selectedSeatCount() + ' / ' + totalTickets();
+    document.getElementById('totalPriceText').textContent = totalPrice().toLocaleString() + '원';
+
+    document.querySelectorAll('.seat:not(.booked)').forEach(function (el) {
+      el.classList.remove('selected', 'pending');
+    });
+    selectedGroups.flat().forEach(function (label) {
+      var el = seatEl(label);
+      if (el) el.classList.add('selected');
+    });
+    if (pendingAnchor) {
+      var el = seatEl(pendingAnchor.label);
+      if (el) el.classList.add('pending');
+    }
+
+    var total = totalTickets();
+    var confirmBtn = document.getElementById('confirmBookBtn');
+    confirmBtn.disabled = !(total > 0 && selectedSeatCount() === total);
+  }
+
+  function resetSelection() {
+    selectedGroups = [];
+    pendingAnchor = null;
+    clearError();
+  }
+
+  function changeCount(category, delta) {
+    if (delta > 0 && (category === 'SENIOR' || category === 'DISABLED')) {
+      var modalId = category === 'SENIOR' ? 'seniorModal' : 'disabledModal';
+      document.getElementById(modalId).style.display = 'flex';
+      return;
+    }
+    var next = counts[category] + delta;
+    if (next < 0) return;
+    counts[category] = next;
+    resetSelection();
+    render();
+  }
+
+  document.querySelectorAll('.counter-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      changeCount(btn.dataset.category, Number(btn.dataset.delta));
+    });
+  });
+
+  document.querySelectorAll('.modal-close').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      document.getElementById(btn.dataset.modal).style.display = 'none';
+    });
+  });
+  document.querySelectorAll('.modal-confirm').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var category = btn.dataset.confirm;
+      counts[category] = counts[category] + 1;
+      resetSelection();
+      render();
+      btn.closest('.modal-overlay').style.display = 'none';
+    });
+  });
+
+  document.getElementById('resetBtn').addEventListener('click', function () {
+    counts = { ADULT: 0, TEEN: 0, SENIOR: 0, DISABLED: 0 };
+    resetSelection();
+    render();
+  });
+
+  function isAdjacent(a, b) {
+    return a.row === b.row && Math.abs(a.col - b.col) === 1;
+  }
+
+  document.querySelectorAll('.seat:not(.booked)').forEach(function (el) {
+    el.addEventListener('click', function () {
+      clearError();
+      var label = el.dataset.label;
+      var row = Number(el.dataset.row);
+      var col = Number(el.dataset.col);
+      var total = totalTickets();
+
+      if (total === 0) {
+        showError('관람인원을 먼저 선택해주세요.');
+        return;
+      }
+
+      // toggle off: clicking the pending anchor
+      if (pendingAnchor && pendingAnchor.label === label) {
+        pendingAnchor = null;
+        render();
+        return;
+      }
+      // toggle off: clicking a seat that's part of a confirmed group
+      for (var i = 0; i < selectedGroups.length; i++) {
+        if (selectedGroups[i].indexOf(label) !== -1) {
+          selectedGroups.splice(i, 1);
+          render();
+          return;
+        }
+      }
+
+      if (selectedSeatCount() >= total) {
+        showError('선택 가능한 좌석 수를 초과했습니다.');
+        return;
+      }
+
+      var seat = { label: label, row: row, col: col };
+
+      if (pendingAnchor) {
+        if (isAdjacent(pendingAnchor, seat)) {
+          selectedGroups.push([pendingAnchor.label, label]);
+          pendingAnchor = null;
+        } else {
+          showError('좌석은 옆자리끼리 붙여서 선택해주세요.');
+          return;
+        }
+      } else {
+        var remaining = total - selectedSeatCount();
+        if (remaining === 1) {
+          selectedGroups.push([label]);
+        } else {
+          pendingAnchor = seat;
+        }
+      }
+      render();
+    });
+  });
+
+  document.getElementById('confirmBookBtn').addEventListener('click', function () {
+    clearError();
+    var seatList = selectedGroups.flat();
+    fetch('/showtimes/' + SHOWTIME_ID + '/book', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        seats: seatList,
+        adultCount: counts.ADULT,
+        teenCount: counts.TEEN,
+        seniorCount: counts.SENIOR,
+        disabledCount: counts.DISABLED,
+      }),
+    })
+      .then(function (res) { return res.json().then(function (body) { return { status: res.status, body: body }; }); })
+      .then(function (result) {
+        if (result.status === 200) {
+          window.location.href = '/bookings';
+        } else {
+          showError(result.body.error || '예매에 실패했습니다.');
+          window.location.reload();
+        }
+      });
+  });
+
+  render();
+</script>
 <%- include('partials/footer') %>
 </body>
 </html>
