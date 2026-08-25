@@ -66,7 +66,7 @@ authRouter.post('/signup', asyncHandler(async (req, res) => {
   }
   if (!USERNAME_PATTERN.test(username)) {
     return res.status(400).render('signup', {
-      error: '아이디는 영문과 숫자를 포함해 5자 이상이어야 합니다.',
+      error: '아이디는 문자+숫자 포함 다섯 글자 이상으로 만들어주세요.',
       formValues,
       duplicateField: null,
     });
