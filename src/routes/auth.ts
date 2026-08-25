@@ -9,6 +9,15 @@ authRouter.get('/signup', (_req, res) => {
   res.render('signup', { error: null });
 });
 
+authRouter.get('/signup/check-username', asyncHandler(async (req, res) => {
+  const username = String(req.query.username || '');
+  if (!username) {
+    return res.status(400).json({ error: '아이디를 입력해주세요.' });
+  }
+  const existing = await prisma.user.findUnique({ where: { username } });
+  res.json({ available: !existing });
+}));
+
 authRouter.post('/signup', asyncHandler(async (req, res) => {
   const { username, email, password, passwordConfirm } = req.body;
   if (!username || !email || !password || !passwordConfirm) {

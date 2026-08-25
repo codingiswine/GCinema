@@ -73,6 +73,21 @@ describe('booking flow', () => {
     expect(res.status).toBe(409);
   });
 
+  test('아이디 중복확인: 사용하지 않는 아이디는 available true', async () => {
+    const username = `user_${rand()}`;
+    const res = await request(app).get(`/signup/check-username?username=${username}`);
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ available: true });
+  });
+
+  test('아이디 중복확인: 이미 있는 아이디는 available false', async () => {
+    const username = `user_${rand()}`;
+    await signup(username);
+    const res = await request(app).get(`/signup/check-username?username=${username}`);
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ available: false });
+  });
+
   test('로그인 성공 시 세션 쿠키가 발급된다', async () => {
     const username = `user_${rand()}`;
     const agent = request.agent(app);

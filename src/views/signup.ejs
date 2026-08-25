@@ -5,13 +5,50 @@
 <%- include('partials/nav') %>
 <h1>회원가입</h1>
 <% if (error) { %><p class="error"><%= error %></p><% } %>
-<form action="/signup" method="post">
-  <input type="text" name="username" placeholder="아이디" required />
+<form action="/signup" method="post" id="signupForm">
+  <div style="display:flex; gap:6px;">
+    <input type="text" name="username" id="username" placeholder="아이디" required style="flex:1" />
+    <button type="button" id="checkUsernameBtn" style="white-space:nowrap;">중복확인</button>
+  </div>
+  <p id="usernameStatus" style="margin:0; font-size:0.85rem;"></p>
   <input type="email" name="email" placeholder="이메일" required />
   <input type="password" name="password" placeholder="비밀번호" required minlength="4" />
   <input type="password" name="passwordConfirm" placeholder="비밀번호 확인" required minlength="4" />
-  <button type="submit">가입하기</button>
+  <button type="submit" id="submitBtn" disabled>가입하기</button>
 </form>
 <p>이미 계정이 있으신가요? <a href="/login">로그인</a></p>
+<script>
+  var usernameInput = document.getElementById('username');
+  var checkBtn = document.getElementById('checkUsernameBtn');
+  var statusEl = document.getElementById('usernameStatus');
+  var submitBtn = document.getElementById('submitBtn');
+
+  usernameInput.addEventListener('input', function () {
+    submitBtn.disabled = true;
+    statusEl.textContent = '';
+  });
+
+  checkBtn.addEventListener('click', function () {
+    var username = usernameInput.value.trim();
+    if (!username) {
+      statusEl.style.color = '#c0392b';
+      statusEl.textContent = '아이디를 입력해주세요.';
+      return;
+    }
+    fetch('/signup/check-username?username=' + encodeURIComponent(username))
+      .then(function (res) { return res.json(); })
+      .then(function (data) {
+        if (data.available) {
+          statusEl.style.color = '#2e7d32';
+          statusEl.textContent = '사용 가능한 아이디입니다.';
+          submitBtn.disabled = false;
+        } else {
+          statusEl.style.color = '#c0392b';
+          statusEl.textContent = '이미 사용 중인 아이디입니다.';
+          submitBtn.disabled = true;
+        }
+      });
+  });
+</script>
 </body>
 </html>
