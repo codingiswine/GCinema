@@ -19,6 +19,7 @@ CREATE TABLE "Movie" (
     "title" TEXT NOT NULL,
     "genre" TEXT NOT NULL,
     "runningTimeMin" INTEGER NOT NULL,
+    "ageRating" TEXT NOT NULL,
     "posterUrl" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -31,7 +32,7 @@ CREATE TABLE "Showtime" (
     "movieId" INTEGER NOT NULL,
     "theaterName" TEXT NOT NULL,
     "startAt" TIMESTAMP(3) NOT NULL,
-    "rows" INTEGER NOT NULL,
+    "totalSeats" INTEGER NOT NULL,
     "cols" INTEGER NOT NULL,
 
     CONSTRAINT "Showtime_pkey" PRIMARY KEY ("id")

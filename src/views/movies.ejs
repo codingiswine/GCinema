@@ -11,7 +11,10 @@
       <img class="movie-poster" src="<%= movie.posterUrl %>" alt="<%= movie.title %> 포스터" />
     <% } %>
     <div class="movie-info">
-      <div class="movie-title"><%= movie.title %></div>
+      <div class="movie-title">
+        <span class="age-badge age-<%= movie.ageRating %>"><%= movie.ageRating %></span>
+        <%= movie.title %>
+      </div>
       <p><%= movie.genre %> · <%= movie.runningTimeMin %>분</p>
     </div>
   </a>

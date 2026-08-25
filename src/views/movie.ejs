@@ -3,17 +3,52 @@
 <%- include('partials/head') %>
 <body>
 <%- include('partials/nav') %>
-<h1><%= movie.title %></h1>
-<p><%= movie.genre %> · <%= movie.runningTimeMin %>분</p>
-<h2>상영 시간</h2>
-<% movie.showtimes.forEach(function(st) { %>
-  <div class="card">
-    <a href="/showtimes/<%= st.id %>">
-      <%= st.theaterName %> · <%= new Date(st.startAt).toLocaleString('ko-KR') %>
-    </a>
-  </div>
-<% }) %>
-<% if (movie.showtimes.length === 0) { %><p>예정된 상영 시간이 없습니다.</p><% } %>
+
+<div class="schedule-layout">
+  <aside class="movie-sidebar">
+    <% movies.forEach(function(m) { %>
+      <a class="movie-sidebar-item<%= m.id === movie.id ? ' active' : '' %>"
+         href="/movies/<%= m.id %>?date=<%= selectedKey %>">
+        <span class="age-badge age-<%= m.ageRating %>"><%= m.ageRating %></span>
+        <span><%= m.title %></span>
+      </a>
+    <% }) %>
+  </aside>
+
+  <section class="schedule-panel">
+    <div class="date-strip">
+      <% dateOptions.forEach(function(d) { %>
+        <a class="date-item<%= d.key === selectedKey ? ' selected' : '' %><%= d.isSat ? ' saturday' : '' %><%= d.isSun ? ' sunday' : '' %>"
+           href="/movies/<%= movie.id %>?date=<%= d.key %>">
+          <span class="date-day"><%= d.day %></span>
+          <span class="date-weekday"><%= d.weekday %></span>
+        </a>
+      <% }) %>
+    </div>
+
+    <div class="schedule-theater">GCinema</div>
+    <div class="schedule-movie-header">
+      <span class="age-badge age-<%= movie.ageRating %>"><%= movie.ageRating %></span>
+      <strong><%= movie.title %></strong>
+      <span class="schedule-movie-meta"><%= movie.genre %> · <%= movie.runningTimeMin %>분</span>
+    </div>
+
+    <% if (showtimes.length === 0) { %>
+      <p>선택한 날짜에는 상영 정보가 없습니다.</p>
+    <% } else { %>
+      <p class="schedule-hall-label"><%= showtimes[0].theaterName %> · 리클라이너+일반 · 총 <%= showtimes[0].totalSeats %>석</p>
+      <div class="showtime-list">
+        <% showtimes.forEach(function(st) { %>
+          <a class="showtime-btn" href="/showtimes/<%= st.id %>">
+            <span class="showtime-time"><%= new Date(st.startAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false }) %></span>
+            <span class="showtime-seats"><%= st.totalSeats - st._count.bookings %>/<%= st.totalSeats %> · <%= st.theaterName %></span>
+          </a>
+        <% }) %>
+      </div>
+    <% } %>
+  </section>
+</div>
+
 <%- include('partials/footer') %>
 </body>
 </html>

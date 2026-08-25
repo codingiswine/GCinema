@@ -20,13 +20,21 @@ export const CATEGORY_LABELS: Record<TicketCategory, string> = {
   DISABLED: '우대',
 };
 
-function seatLabels(rows: number, cols: number): string[] {
+// Generates row-major seat labels for `totalSeats` seats, `cols` per row.
+// The last row is partial when totalSeats isn't a clean multiple of cols
+// (e.g. 67 seats / 14 cols -> 4 full rows + a final row of 11).
+function seatLabels(totalSeats: number, cols: number): string[] {
   const labels: string[] = [];
-  for (let r = 0; r < rows; r++) {
+  let remaining = totalSeats;
+  let r = 0;
+  while (remaining > 0) {
     const rowLetter = String.fromCharCode(65 + r);
-    for (let c = 1; c <= cols; c++) {
+    const seatsInRow = Math.min(cols, remaining);
+    for (let c = 1; c <= seatsInRow; c++) {
       labels.push(`${rowLetter}${c}`);
     }
+    remaining -= seatsInRow;
+    r++;
   }
   return labels;
 }
@@ -40,11 +48,12 @@ bookingsRouter.get('/showtimes/:id', asyncHandler(async (req, res) => {
   if (!showtime) return res.status(404).send('상영 정보를 찾을 수 없습니다.');
 
   const booked = new Set(showtime.bookings.map((b) => b.seatLabel));
-  const seats = seatLabels(showtime.rows, showtime.cols).map((label) => ({
+  const seats = seatLabels(showtime.totalSeats, showtime.cols).map((label) => ({
     label,
     booked: booked.has(label),
   }));
-  res.render('showtimeSeats', { showtime, seats, prices: TICKET_PRICES });
+  const rows = Math.ceil(showtime.totalSeats / showtime.cols);
+  res.render('showtimeSeats', { showtime, seats, rows, prices: TICKET_PRICES });
 }));
 
 bookingsRouter.post('/showtimes/:id/book', requireLogin, asyncHandler(async (req, res) => {

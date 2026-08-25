@@ -15,11 +15,11 @@ describe('booking flow', () => {
 
   beforeAll(async () => {
     const movie = await prisma.movie.create({
-      data: { title: 'Test Movie', genre: 'Test', runningTimeMin: 100 },
+      data: { title: 'Test Movie', genre: 'Test', runningTimeMin: 100, ageRating: '15' },
     });
     movieId = movie.id;
     const showtime = await prisma.showtime.create({
-      data: { movieId, theaterName: '1관', startAt: new Date(), rows: 2, cols: 2 },
+      data: { movieId, theaterName: '1관', startAt: new Date(), totalSeats: 4, cols: 2 },
     });
     showtimeId = showtime.id;
   });

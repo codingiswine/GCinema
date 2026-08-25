@@ -22,6 +22,7 @@ model Movie {
   title          String
   genre          String
   runningTimeMin Int
+  ageRating      String
   posterUrl      String?
   createdAt      DateTime   @default(now())
   showtimes      Showtime[]
@@ -33,7 +34,7 @@ model Showtime {
   movieId     Int
   theaterName String
   startAt     DateTime
-  rows        Int
+  totalSeats  Int
   cols        Int
   bookings    Booking[]
 }
