@@ -7,6 +7,14 @@ body {
   color: #1a1a1a;
   background: #fafafa;
 }
+.brand {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding-top: 4px;
+}
+.brand-name { font-size: 1.3rem; font-weight: 800; letter-spacing: 0.02em; color: #111; text-decoration: none; }
+.brand-address { font-size: 0.8rem; color: #777; }
 nav {
   display: flex;
   gap: 16px;
@@ -40,29 +48,29 @@ button {
 }
 button:hover { background: #444; }
 .error { color: #c0392b; margin-bottom: 8px; }
-.movie-list { display: flex; flex-direction: column; gap: 14px; }
+.movie-list { display: flex; flex-direction: column; gap: 22px; }
 .movie-card {
   display: flex;
-  gap: 14px;
+  flex-direction: column;
+  width: 220px;
   border: 1px solid #ddd;
   border-radius: 10px;
-  padding: 12px;
+  overflow: hidden;
   background: #fff;
   text-decoration: none;
   color: #111;
 }
 .movie-card:hover { border-color: #999; }
 .movie-poster {
-  width: 100px;
-  height: 150px;
+  width: 100%;
+  aspect-ratio: 2 / 3;
   object-fit: cover;
-  border-radius: 6px;
-  flex-shrink: 0;
   background: #eee;
+  display: block;
 }
-.movie-info { display: flex; flex-direction: column; justify-content: center; }
-.movie-title { font-weight: 700; font-size: 1.1rem; margin-bottom: 4px; }
-.movie-info p { margin: 0; color: #555; }
+.movie-info { padding: 10px 12px; }
+.movie-title { font-weight: 700; font-size: 1.05rem; margin-bottom: 4px; }
+.movie-info p { margin: 0; color: #555; font-size: 0.9rem; }
 .seat-grid { display: flex; flex-direction: column; gap: 6px; margin: 16px 0; }
 .seat-row { display: flex; gap: 6px; }
 .seat {

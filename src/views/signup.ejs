@@ -30,8 +30,8 @@
   </div>
 
   <div style="display:flex; gap:6px; align-items:center;">
-    <input type="text" id="emailLocal" placeholder="이메일 아이디" required style="flex:1; min-width:0;" />
-    <span>@</span>
+    <input type="text" id="emailLocal" placeholder="이메일" required style="flex:1; min-width:0;" />
+    <span id="emailAtSign">@</span>
     <select id="emailDomainSelect" style="flex:1; min-width:0;">
       <option value="custom">직접입력</option>
       <option value="naver.com">naver.com</option>
@@ -41,7 +41,6 @@
       <option value="nate.com">nate.com</option>
     </select>
   </div>
-  <input type="text" id="emailDomainCustom" placeholder="도메인 입력 (예: gmail.com)" required />
 
   <input type="password" name="password" placeholder="비밀번호" required minlength="4" />
   <input type="password" name="passwordConfirm" placeholder="비밀번호 확인" required minlength="4" />
@@ -84,12 +83,17 @@
   });
 
   var emailDomainSelect = document.getElementById('emailDomainSelect');
-  var emailDomainCustom = document.getElementById('emailDomainCustom');
-  emailDomainSelect.addEventListener('change', function () {
+  var emailAtSign = document.getElementById('emailAtSign');
+  var emailLocal = document.getElementById('emailLocal');
+
+  function updateEmailMode() {
     var isCustom = emailDomainSelect.value === 'custom';
-    emailDomainCustom.style.display = isCustom ? '' : 'none';
-    emailDomainCustom.required = isCustom;
-  });
+    emailAtSign.style.display = isCustom ? 'none' : '';
+    emailDomainSelect.style.display = isCustom ? 'none' : '';
+    emailLocal.placeholder = isCustom ? '이메일 (example@gmail.com)' : '이메일';
+  }
+  emailDomainSelect.addEventListener('change', updateEmailMode);
+  updateEmailMode();
 
   document.getElementById('signupForm').addEventListener('submit', function () {
     var prefix = document.getElementById('phonePrefix').value;
@@ -97,11 +101,9 @@
     var last = document.getElementById('phoneLast').value.trim();
     document.getElementById('phoneHidden').value = prefix + '-' + mid + '-' + last;
 
-    var local = document.getElementById('emailLocal').value.trim();
-    var domain = emailDomainSelect.value === 'custom'
-      ? emailDomainCustom.value.trim()
-      : emailDomainSelect.value;
-    document.getElementById('emailHidden').value = local + '@' + domain;
+    var local = emailLocal.value.trim();
+    var isCustom = emailDomainSelect.value === 'custom';
+    document.getElementById('emailHidden').value = isCustom ? local : local + '@' + emailDomainSelect.value;
   });
 </script>
 </body>
