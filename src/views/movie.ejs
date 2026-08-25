@@ -30,7 +30,8 @@
     <div class="schedule-movie-header">
       <span class="age-badge age-<%= movie.ageRating %>"><%= movie.ageRating %></span>
       <strong><%= movie.title %></strong>
-      <span class="schedule-movie-meta"><%= movie.genre %> · <%= movie.runningTimeMin %>분</span>
+      <% const rtH = Math.floor(movie.runningTimeMin / 60); const rtM = movie.runningTimeMin % 60; %>
+      <span class="schedule-movie-meta"><%= movie.genre %> · <%= rtH %>시간 <%= rtM %>분</span>
     </div>
 
     <% if (showtimes.length === 0) { %>

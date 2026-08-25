@@ -108,9 +108,10 @@ describe('booking flow', () => {
 
   test('휴대전화번호가 저장된다', async () => {
     const username = `user1${rand()}`;
-    await signup(username, `${username}@test.com`, '010-9999-8888');
+    const phone = randPhone();
+    await signup(username, `${username}@test.com`, phone);
     const user = await prisma.user.findUnique({ where: { username } });
-    expect(user!.phone).toBe('010-9999-8888');
+    expect(user!.phone).toBe(phone);
   });
 
   test('비밀번호 확인이 일치하지 않으면 회원가입에 실패한다', async () => {
