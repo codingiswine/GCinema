@@ -256,7 +256,7 @@ button:hover { background: #444; }
 
 .detail-topbar {
   display: flex; justify-content: space-between; align-items: center;
-  max-width: 520px; margin: 0 auto 10px;
+  max-width: 600px; margin: 0 auto 10px;
 }
 .detail-topbar-left, .detail-topbar-right { display: flex; align-items: center; gap: 8px; }
 .topbar-icon-btn {
@@ -270,13 +270,13 @@ button:hover { background: #444; }
 .detail-hero {
   display: block;
   width: 100%;
-  max-width: 520px;
+  max-width: 600px;
   margin: 0 auto 16px;
   border-radius: 10px;
 }
 .detail-info {
   display: flex; flex-direction: column; align-items: center; gap: 10px;
-  max-width: 520px; margin: 0 auto; text-align: center;
+  max-width: 600px; margin: 0 auto; text-align: center;
 }
 .detail-title-row { display: flex; align-items: center; justify-content: center; gap: 10px; }
 .detail-title-row h1 { margin: 0; font-size: 1.3rem; }
