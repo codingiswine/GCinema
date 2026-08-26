@@ -65,6 +65,38 @@ moviesRouter.post('/movies/:id/like', requireLogin, asyncHandler(async (req, res
   res.json({ liked: true });
 }));
 
+// 평점/한줄평/영화일기 저장. 마이페이지의 "내가 본 영화"·"나의 영화일기" 탭에서
+// 쓰며, 실제로 관람한(과거 회차를 취소하지 않고 예매한) 영화만 남길 수 있다.
+// 세 필드 중 보낸 것만 갱신하므로 평점만 남기거나 일기만 남기는 것도 된다.
+moviesRouter.post('/movies/:id/review', requireLogin, asyncHandler(async (req, res) => {
+  const movieId = Number(req.params.id);
+  const userId = req.session.userId!;
+
+  const watched = await prisma.booking.findFirst({
+    where: { userId, cancelledAt: null, showtime: { movieId, startAt: { lte: new Date() } } },
+  });
+  if (!watched) return res.status(403).json({ error: '관람한 영화만 기록을 남길 수 있습니다.' });
+
+  const { rating, comment, diary } = req.body;
+  const data: { rating?: number; comment?: string; diary?: string } = {};
+  if (rating !== undefined) {
+    const r = Number(rating);
+    if (!Number.isInteger(r) || r < 1 || r > 5) {
+      return res.status(400).json({ error: '평점은 1~5 사이여야 합니다.' });
+    }
+    data.rating = r;
+  }
+  if (comment !== undefined) data.comment = String(comment).slice(0, 200);
+  if (diary !== undefined) data.diary = String(diary).slice(0, 2000);
+
+  const review = await prisma.movieReview.upsert({
+    where: { userId_movieId: { userId, movieId } },
+    create: { userId, movieId, ...data },
+    update: data,
+  });
+  res.json({ ok: true, review });
+}));
+
 // Unified schedule page: pick a movie from the sidebar and a date from the
 // strip without leaving the page (each click is a normal link, so it works
 // without client-side JS and keeps the movie/date selection in the URL).

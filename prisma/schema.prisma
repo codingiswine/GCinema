@@ -17,6 +17,7 @@ model User {
   bookings         Booking[]
   movieLikes       MovieLike[]
   checkoutAttempts CheckoutAttempt[]
+  movieReviews     MovieReview[]
 }
 
 model Movie {
@@ -34,6 +35,7 @@ model Movie {
   createdAt           DateTime    @default(now())
   showtimes           Showtime[]
   likes               MovieLike[]
+  reviews             MovieReview[]
 }
 
 model MovieLike {
@@ -121,4 +123,21 @@ model CheckoutAttempt {
 
   @@index([userId])
   @@index([showtimeId, completedAt])
+}
+
+// 관람한 영화에 남기는 평점(1~5)/한줄평/영화일기. 영화 한 편당 사용자 한 명이
+// 하나만 남기므로 MovieLike와 같은 (userId, movieId) 유니크 패턴을 쓰고,
+// 평점만 남기거나 일기만 남기는 경우도 있어 세 필드 모두 선택 입력이다.
+model MovieReview {
+  id        Int      @id @default(autoincrement())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    Int
+  movie     Movie    @relation(fields: [movieId], references: [id])
+  movieId   Int
+  rating    Int?
+  comment   String?
+  diary     String?
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, movieId])
 }

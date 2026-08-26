@@ -20,7 +20,27 @@
   </div>
 <% } %>
 
-<% if (tab === 'diary' || tab === 'inquiry' || tab === 'profile') { %>
+<% if (tab === 'diary') { %>
+  <% watchedMovies.forEach(function(m) { %>
+    <% var review = reviewByMovie[m.id]; %>
+    <div class="card diary-card" id="diary-movie-<%= m.id %>">
+      <div class="booking-card-head">
+        <strong><%= m.title %></strong>
+        <button type="button" class="btn-secondary diary-toggle-btn" data-movie-id="<%= m.id %>"><%= review && review.diary ? '일기 수정' : '일기쓰기' %></button>
+      </div>
+      <% if (review && review.diary) { %>
+        <p class="diary-preview"><%= review.diary %></p>
+      <% } %>
+      <div class="diary-editor" style="display:none;">
+        <textarea class="diary-textarea" maxlength="2000" placeholder="오늘 본 영화에 대한 감상을 자유롭게 적어보세요."><%= review && review.diary ? review.diary : '' %></textarea>
+        <button type="button" class="btn-secondary diary-save-btn" data-movie-id="<%= m.id %>">저장</button>
+      </div>
+    </div>
+  <% }) %>
+  <% if (watchedMovies.length === 0) { %>
+    <p>아직 작성할 수 있는 영화 일기가 없습니다. 관람한 영화가 생기면 여기에 나타납니다.</p>
+  <% } %>
+<% } else if (tab === 'inquiry' || tab === 'profile') { %>
   <p class="mypage-placeholder">준비 중입니다.</p>
 <% } else { %>
   <% var showCancelBtn = tab === 'payments' && sub !== 'cancelled'; %>
@@ -37,6 +57,18 @@
         <% } %>
       </div>
       <p><%= b.showtime.theaterName %> · <%= new Date(b.showtime.startAt).toLocaleString('ko-KR') %> · 좌석 <%= b.seatLabel %> · <%= categoryLabels[b.category] %> <%= b.price.toLocaleString() %>원</p>
+      <% if (tab === 'watched') { %>
+        <% var review = reviewByMovie[b.showtime.movieId]; %>
+        <form class="review-form" data-movie-id="<%= b.showtime.movieId %>">
+          <div class="star-rating">
+            <% for (var i = 1; i <= 5; i++) { %>
+              <button type="button" class="star-btn<%= review && review.rating >= i ? ' filled' : '' %>" data-value="<%= i %>">★</button>
+            <% } %>
+          </div>
+          <input type="text" class="review-comment-input" maxlength="100" placeholder="한 줄 평을 남겨주세요" value="<%= review && review.comment ? review.comment : '' %>" />
+          <button type="button" class="btn-secondary review-save-btn">저장</button>
+        </form>
+      <% } %>
     </div>
   <% }) %>
   <% if (bookings.length === 0) { %>
@@ -87,6 +119,45 @@
         .then(function () { window.location.reload(); });
     });
   }
+
+  document.querySelectorAll('.review-form').forEach(function (form) {
+    var stars = form.querySelectorAll('.star-btn');
+    var selected = 0;
+    stars.forEach(function (btn) {
+      if (btn.classList.contains('filled')) selected = Number(btn.dataset.value);
+    });
+    stars.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        selected = Number(btn.dataset.value);
+        stars.forEach(function (s) { s.classList.toggle('filled', Number(s.dataset.value) <= selected); });
+      });
+    });
+    form.querySelector('.review-save-btn').addEventListener('click', function () {
+      fetch('/movies/' + form.dataset.movieId + '/review', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rating: selected, comment: form.querySelector('.review-comment-input').value }),
+      });
+    });
+  });
+
+  document.querySelectorAll('.diary-toggle-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var editor = btn.closest('.diary-card').querySelector('.diary-editor');
+      editor.style.display = editor.style.display === 'none' ? 'block' : 'none';
+    });
+  });
+
+  document.querySelectorAll('.diary-save-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var textarea = btn.closest('.diary-editor').querySelector('.diary-textarea');
+      fetch('/movies/' + btn.dataset.movieId + '/review', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ diary: textarea.value }),
+      }).then(function () { window.location.reload(); });
+    });
+  });
 </script>
 
 <%- include('partials/footer') %>

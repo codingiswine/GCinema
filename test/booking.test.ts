@@ -63,6 +63,7 @@ describe('booking flow', () => {
 
   afterAll(async () => {
     const showtimeIds = [showtimeId, pastShowtimeId, cancelShowtimeId, payShowtimeId, priorityShowtimeId];
+    await prisma.movieReview.deleteMany({ where: { movieId } });
     await prisma.checkoutAttempt.deleteMany({ where: { showtimeId: { in: showtimeIds } } });
     await prisma.booking.deleteMany({ where: { showtimeId: { in: showtimeIds } } });
     await prisma.movieLike.deleteMany({ where: { movieId } });
@@ -637,5 +638,87 @@ describe('booking flow', () => {
       where: { userId: user!.id, showtimeId: payShowtimeId, seats: 'A1,A2' },
     });
     expect(attempt!.completedAt).not.toBeNull();
+  });
+
+  test('관람하지 않은 영화는 평점/한줄평/일기를 남길 수 없다', async () => {
+    const username = `user1${rand()}`;
+    const agent = request.agent(app);
+    await signup(username);
+    await agent.post('/login').send({ username, password: VALID_PASSWORD });
+
+    const res = await agent.post(`/movies/${movieId}/review`).send({ rating: 5, comment: '재밌어요' });
+    expect(res.status).toBe(403);
+    expect(await prisma.movieReview.findFirst({ where: { movieId } })).toBeNull();
+  });
+
+  test('관람한 영화는 평점과 한줄평을 남길 수 있고, 다시 저장하면 갱신된다', async () => {
+    const username = `user1${rand()}`;
+    const agent = request.agent(app);
+    await signup(username);
+    await agent.post('/login').send({ username, password: VALID_PASSWORD });
+    const user = await prisma.user.findUnique({ where: { username } });
+    // 지난 회차 예매는 정상 플로우로는 만들 수 없으므로(이미 상영 시작) 시드처럼 직접 만든다.
+    await prisma.booking.create({
+      data: { userId: user!.id, showtimeId: pastShowtimeId, seatLabel: 'A1', category: 'ADULT', price: 16000 },
+    });
+
+    const res = await agent.post(`/movies/${movieId}/review`).send({ rating: 5, comment: '최고예요' });
+    expect(res.status).toBe(200);
+    const saved = await prisma.movieReview.findUnique({ where: { userId_movieId: { userId: user!.id, movieId } } });
+    expect(saved!.rating).toBe(5);
+    expect(saved!.comment).toBe('최고예요');
+
+    const updated = await agent.post(`/movies/${movieId}/review`).send({ rating: 3, comment: '다시 보니 별로예요' });
+    expect(updated.status).toBe(200);
+    const resaved = await prisma.movieReview.findUnique({ where: { userId_movieId: { userId: user!.id, movieId } } });
+    expect(resaved!.rating).toBe(3);
+    expect(resaved!.comment).toBe('다시 보니 별로예요');
+  });
+
+  test('평점은 1~5 범위를 벗어나면 저장되지 않는다', async () => {
+    const username = `user1${rand()}`;
+    const agent = request.agent(app);
+    await signup(username);
+    await agent.post('/login').send({ username, password: VALID_PASSWORD });
+    const user = await prisma.user.findUnique({ where: { username } });
+    await prisma.booking.create({
+      data: { userId: user!.id, showtimeId: pastShowtimeId, seatLabel: 'A2', category: 'ADULT', price: 16000 },
+    });
+
+    const res = await agent.post(`/movies/${movieId}/review`).send({ rating: 6 });
+    expect(res.status).toBe(400);
+    expect(
+      await prisma.movieReview.findUnique({ where: { userId_movieId: { userId: user!.id, movieId } } })
+    ).toBeNull();
+  });
+
+  test('내가 본 영화 탭에는 관람한 영화가 보이고, 나의 영화일기 탭에는 일기쓰기 버튼이 있다', async () => {
+    const username = `user1${rand()}`;
+    const agent = request.agent(app);
+    await signup(username);
+    await agent.post('/login').send({ username, password: VALID_PASSWORD });
+    const user = await prisma.user.findUnique({ where: { username } });
+    await prisma.booking.create({
+      data: { userId: user!.id, showtimeId: pastShowtimeId, seatLabel: 'B1', category: 'ADULT', price: 16000 },
+    });
+
+    const watched = await agent.get('/bookings?tab=watched');
+    expect(watched.status).toBe(200);
+    expect(watched.text).toContain('Test Movie');
+
+    const diaryBefore = await agent.get('/bookings?tab=diary');
+    expect(diaryBefore.status).toBe(200);
+    expect(diaryBefore.text).toContain('Test Movie');
+    expect(diaryBefore.text).toContain('일기쓰기');
+    expect(diaryBefore.text).not.toContain('준비 중입니다');
+
+    const saveDiary = await agent
+      .post(`/movies/${movieId}/review`)
+      .send({ diary: '오늘 재밌게 봤다.' });
+    expect(saveDiary.status).toBe(200);
+
+    const diaryAfter = await agent.get('/bookings?tab=diary');
+    expect(diaryAfter.text).toContain('오늘 재밌게 봤다.');
+    expect(diaryAfter.text).toContain('일기 수정');
   });
 });

@@ -98,6 +98,16 @@ h1 { font-size: 1.4rem; }
 .mypage-subtab { color: #999; text-decoration: none; }
 .mypage-subtab.active { color: #0f6e8c; font-weight: 700; }
 .mypage-placeholder { color: #999; text-align: center; padding: 60px 0; }
+
+.review-form { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+.star-rating { display: flex; }
+.star-btn { border: none; background: none; font-size: 1.2rem; color: #ddd; cursor: pointer; padding: 2px; }
+.star-btn.filled { color: #f5a623; }
+.review-comment-input { flex: 1; padding: 6px 10px; border: 1px solid #ddd; border-radius: 6px; }
+.diary-preview { color: #555; margin-top: 8px; white-space: pre-wrap; }
+.diary-editor { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+.diary-textarea { min-height: 80px; padding: 8px 10px; border: 1px solid #ddd; border-radius: 6px; resize: vertical; font: inherit; }
+.diary-save-btn { align-self: flex-end; }
 .faq-title { font-size: 1.1rem; margin: 24px 0 10px; }
 .faq-list { display: flex; flex-direction: column; gap: 8px; }
 .faq-item {

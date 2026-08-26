@@ -348,10 +348,11 @@ bookingsRouter.post('/showtimes/:id/book', requireLogin, asyncHandler(async (req
   }
 }));
 
-// 실제 영화관 마이페이지처럼 여러 섹션을 탭으로 묶은 화면. "내가 본 영화"와
-// "결제내역"(예매내역/취소내역)은 이미 있는 Booking 데이터로 바로 계산할 수
-// 있어 실제 기능으로 두고, 영화일기·1:1문의·정보관리는 이 과제 요구 기능과
-// 무관한 새 영역이라 탭만 두고 "준비 중" 안내만 보여준다.
+// 실제 영화관 마이페이지처럼 여러 섹션을 탭으로 묶은 화면. "내가 본 영화"·
+// "결제내역"(예매내역/취소내역)·"나의 영화일기"는 이미 있는 Booking 데이터
+// 위에 평점/한줄평/일기(MovieReview)만 얹어 실제 기능으로 두고, 1:1문의·
+// 정보관리는 이 과제 요구 기능과 무관한 새 영역이라 탭만 두고
+// "준비 중" 안내만 보여준다.
 const MYPAGE_TABS = ['watched', 'payments', 'diary', 'inquiry', 'profile'] as const;
 type MypageTab = (typeof MYPAGE_TABS)[number];
 
@@ -363,12 +364,37 @@ bookingsRouter.get('/bookings', requireLogin, asyncHandler(async (req, res) => {
   const sub = req.query.sub === 'cancelled' ? 'cancelled' : 'reserved';
 
   let bookings: Prisma.BookingGetPayload<{ include: { showtime: { include: { movie: true } } } }>[] = [];
+  let watchedMovies: { id: number; title: string }[] = [];
+  let reviewByMovie: Record<number, { rating: number | null; comment: string | null; diary: string | null }> = {};
+
   if (tab === 'watched') {
     bookings = await prisma.booking.findMany({
       where: { userId, cancelledAt: null, showtime: { startAt: { lte: new Date() } } },
       include: { showtime: { include: { movie: true } } },
       orderBy: { showtime: { startAt: 'desc' } },
     });
+    const reviews = await prisma.movieReview.findMany({
+      where: { userId, movieId: { in: [...new Set(bookings.map((b) => b.showtime.movieId))] } },
+    });
+    reviewByMovie = Object.fromEntries(reviews.map((r) => [r.movieId, r]));
+  } else if (tab === 'diary') {
+    // "나의 영화 일기"는 좌석 단위가 아니라 영화 단위 화면이라 관람한 영화를
+    // 중복 없이 한 번씩만 보여준다(같은 영화를 여러 좌석/여러 번 봤어도 한 장).
+    const watchedBookings = await prisma.booking.findMany({
+      where: { userId, cancelledAt: null, showtime: { startAt: { lte: new Date() } } },
+      include: { showtime: { include: { movie: true } } },
+      orderBy: { showtime: { startAt: 'desc' } },
+    });
+    const seen = new Set<number>();
+    for (const b of watchedBookings) {
+      if (seen.has(b.showtime.movieId)) continue;
+      seen.add(b.showtime.movieId);
+      watchedMovies.push(b.showtime.movie);
+    }
+    const reviews = await prisma.movieReview.findMany({
+      where: { userId, movieId: { in: watchedMovies.map((m) => m.id) } },
+    });
+    reviewByMovie = Object.fromEntries(reviews.map((r) => [r.movieId, r]));
   } else if (tab === 'payments' && sub === 'cancelled') {
     bookings = await prisma.booking.findMany({
       where: { userId, cancelledAt: { not: null } },
@@ -383,7 +409,7 @@ bookingsRouter.get('/bookings', requireLogin, asyncHandler(async (req, res) => {
     });
   }
 
-  res.render('bookings', { bookings, categoryLabels: CATEGORY_LABELS, tab, sub });
+  res.render('bookings', { bookings, categoryLabels: CATEGORY_LABELS, tab, sub, watchedMovies, reviewByMovie });
 }));
 
 bookingsRouter.post('/bookings/:id/cancel', requireLogin, asyncHandler(async (req, res) => {
