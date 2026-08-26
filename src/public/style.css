@@ -36,8 +36,10 @@ body {
 .footer-links span:not(:last-child) { border-right: 1px solid #ddd; padding-right: 12px; }
 .footer-links-strong { font-weight: 700; color: #555; }
 .footer-bottom { display: flex; justify-content: space-between; align-items: flex-end; text-align: left; }
-.footer-company { line-height: 1.6; }
-.footer-company p { margin: 0; }
+.footer-company { display: flex; align-items: center; gap: 14px; }
+.footer-mark { width: 34px; height: 34px; object-fit: contain; flex-shrink: 0; }
+.footer-company-text { line-height: 1.7; }
+.footer-company-text p { margin: 0; }
 .footer-affiliates { position: relative; font-size: 0.82rem; }
 .footer-affiliates summary {
   cursor: pointer; list-style: none; color: #777;
