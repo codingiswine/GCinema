@@ -90,7 +90,7 @@ moviesRouter.get('/movies/:id', asyncHandler(async (req, res) => {
   const showtimes = await prisma.showtime.findMany({
     where: { movieId, startAt: { gte: from, lt: rangeEnd } },
     orderBy: { startAt: 'asc' },
-    include: { _count: { select: { bookings: true } } },
+    include: { _count: { select: { bookings: { where: { cancelledAt: null } } } } },
   });
 
   res.render('movie', {

@@ -332,12 +332,51 @@ describe('booking flow', () => {
     const res = await agent.post(`/bookings/${booking!.id}/cancel`);
     expect(res.status).toBe(200);
     expect(res.body).toEqual({ ok: true });
-    expect(await prisma.booking.findUnique({ where: { id: booking!.id } })).toBeNull();
+
+    // 취소는 하드 삭제가 아니라 cancelledAt을 남기는 소프트 삭제라, 고객 관리·
+    // 마케팅 분석을 위해 취소 이력 자체는 DB에 계속 남아있어야 한다.
+    const cancelled = await prisma.booking.findUnique({ where: { id: booking!.id } });
+    expect(cancelled).not.toBeNull();
+    expect(cancelled!.cancelledAt).not.toBeNull();
 
     const rebook = await agent
       .post(`/showtimes/${cancelShowtimeId}/book`)
       .send({ seats: ['C1'], adultCount: 1, teenCount: 0, seniorCount: 0, disabledCount: 0 });
     expect(rebook.status).toBe(200);
+  });
+
+  test('취소한 예매는 예매 내역 목록에 더 이상 보이지 않는다', async () => {
+    const username = `user1${rand()}`;
+    const agent = request.agent(app);
+    await signup(username);
+    await agent.post('/login').send({ username, password: VALID_PASSWORD });
+    await agent
+      .post(`/showtimes/${cancelShowtimeId}/book`)
+      .send({ seats: ['A1'], adultCount: 1, teenCount: 0, seniorCount: 0, disabledCount: 0 });
+    const booking = await prisma.booking.findFirst({ where: { showtimeId: cancelShowtimeId, seatLabel: 'A1' } });
+
+    await agent.post(`/bookings/${booking!.id}/cancel`);
+
+    const list = await agent.get('/bookings');
+    expect(list.status).toBe(200);
+    expect(list.text).not.toContain('A1');
+  });
+
+  test('이미 취소한 예매는 다시 취소할 수 없다', async () => {
+    const username = `user1${rand()}`;
+    const agent = request.agent(app);
+    await signup(username);
+    await agent.post('/login').send({ username, password: VALID_PASSWORD });
+    await agent
+      .post(`/showtimes/${cancelShowtimeId}/book`)
+      .send({ seats: ['A2'], adultCount: 1, teenCount: 0, seniorCount: 0, disabledCount: 0 });
+    const booking = await prisma.booking.findFirst({ where: { showtimeId: cancelShowtimeId, seatLabel: 'A2' } });
+
+    const first = await agent.post(`/bookings/${booking!.id}/cancel`);
+    expect(first.status).toBe(200);
+
+    const second = await agent.post(`/bookings/${booking!.id}/cancel`);
+    expect(second.status).toBe(404);
   });
 
   test('다른 사용자의 예매는 취소할 수 없다', async () => {

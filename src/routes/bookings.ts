@@ -64,7 +64,7 @@ bookingsRouter.get('/showtimes/:id', requireLogin, asyncHandler(async (req, res)
   const showtimeId = Number(req.params.id);
   const showtime = await prisma.showtime.findUnique({
     where: { id: showtimeId },
-    include: { movie: true, bookings: true },
+    include: { movie: true, bookings: { where: { cancelledAt: null } } },
   });
   if (!showtime) return res.status(404).send('상영 정보를 찾을 수 없습니다.');
   // 지난 회차의 좌석 페이지로 직접 들어오면 해당 영화 상영시간표로 되돌린다.
@@ -358,7 +358,7 @@ bookingsRouter.post('/showtimes/:id/book', requireLogin, asyncHandler(async (req
 
 bookingsRouter.get('/bookings', requireLogin, asyncHandler(async (req, res) => {
   const bookings = await prisma.booking.findMany({
-    where: { userId: req.session.userId! },
+    where: { userId: req.session.userId!, cancelledAt: null },
     include: { showtime: { include: { movie: true } } },
     orderBy: { bookedAt: 'desc' },
   });
@@ -368,9 +368,13 @@ bookingsRouter.get('/bookings', requireLogin, asyncHandler(async (req, res) => {
 bookingsRouter.post('/bookings/:id/cancel', requireLogin, asyncHandler(async (req, res) => {
   const bookingId = Number(req.params.id);
   const booking = await prisma.booking.findUnique({ where: { id: bookingId } });
-  if (!booking || booking.userId !== req.session.userId) {
+  if (!booking || booking.userId !== req.session.userId || booking.cancelledAt) {
     return res.status(404).json({ error: '예매 내역을 찾을 수 없습니다.' });
   }
-  await prisma.booking.delete({ where: { id: bookingId } });
+  // 행을 지우지 않고 cancelledAt만 채운다 — 취소 이력을 남겨 고객 관리·
+  // 마케팅 분석(취소율, 재예매 패턴 등)에 쓸 수 있게 하기 위함. 같은
+  // 회차·좌석의 재예매는 마이그레이션에서 만든 부분 유니크 인덱스
+  // (cancelledAt IS NULL 인 행끼리만 유니크)가 허용해준다.
+  await prisma.booking.update({ where: { id: bookingId }, data: { cancelledAt: new Date() } });
   res.json({ ok: true });
 }));
