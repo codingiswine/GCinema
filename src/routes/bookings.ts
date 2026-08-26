@@ -124,3 +124,13 @@ bookingsRouter.get('/bookings', requireLogin, asyncHandler(async (req, res) => {
   });
   res.render('bookings', { bookings, categoryLabels: CATEGORY_LABELS });
 }));
+
+bookingsRouter.post('/bookings/:id/cancel', requireLogin, asyncHandler(async (req, res) => {
+  const bookingId = Number(req.params.id);
+  const booking = await prisma.booking.findUnique({ where: { id: bookingId } });
+  if (!booking || booking.userId !== req.session.userId) {
+    return res.status(404).json({ error: '예매 내역을 찾을 수 없습니다.' });
+  }
+  await prisma.booking.delete({ where: { id: bookingId } });
+  res.json({ ok: true });
+}));

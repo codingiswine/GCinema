@@ -60,6 +60,7 @@ h1 { font-size: 1.4rem; }
   background: #fff;
 }
 .card a { text-decoration: none; color: #111; font-weight: 600; }
+.booking-card-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
 .faq-title { font-size: 1.1rem; margin: 24px 0 10px; }
 .faq-list { display: flex; flex-direction: column; gap: 8px; }
 .faq-item {

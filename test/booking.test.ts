@@ -270,4 +270,60 @@ describe('booking flow', () => {
     });
     expect(a1ByUser2).toBeNull();
   });
+
+  test('본인 예매는 취소할 수 있고, 취소 후 해당 좌석은 다시 예매 가능해진다', async () => {
+    const username = `user1${rand()}`;
+    const agent = request.agent(app);
+    await signup(username);
+    await agent.post('/login').send({ username, password: VALID_PASSWORD });
+    await agent
+      .post(`/showtimes/${showtimeId}/book`)
+      .send({ seats: ['C1'], adultCount: 1, teenCount: 0, seniorCount: 0, disabledCount: 0 });
+    const booking = await prisma.booking.findFirst({ where: { showtimeId, seatLabel: 'C1' } });
+
+    const res = await agent.post(`/bookings/${booking!.id}/cancel`);
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ ok: true });
+    expect(await prisma.booking.findUnique({ where: { id: booking!.id } })).toBeNull();
+
+    const rebook = await agent
+      .post(`/showtimes/${showtimeId}/book`)
+      .send({ seats: ['C1'], adultCount: 1, teenCount: 0, seniorCount: 0, disabledCount: 0 });
+    expect(rebook.status).toBe(200);
+  });
+
+  test('다른 사용자의 예매는 취소할 수 없다', async () => {
+    const owner = `user1${rand()}`;
+    const ownerAgent = request.agent(app);
+    await signup(owner);
+    await ownerAgent.post('/login').send({ username: owner, password: VALID_PASSWORD });
+    await ownerAgent
+      .post(`/showtimes/${showtimeId}/book`)
+      .send({ seats: ['C2'], adultCount: 1, teenCount: 0, seniorCount: 0, disabledCount: 0 });
+    const booking = await prisma.booking.findFirst({ where: { showtimeId, seatLabel: 'C2' } });
+
+    const intruder = `user1${rand()}`;
+    const intruderAgent = request.agent(app);
+    await signup(intruder);
+    await intruderAgent.post('/login').send({ username: intruder, password: VALID_PASSWORD });
+
+    const res = await intruderAgent.post(`/bookings/${booking!.id}/cancel`);
+    expect(res.status).toBe(404);
+    expect(await prisma.booking.findUnique({ where: { id: booking!.id } })).not.toBeNull();
+  });
+
+  test('로그인하지 않으면 예매를 취소할 수 없다', async () => {
+    const username = `user1${rand()}`;
+    const agent = request.agent(app);
+    await signup(username);
+    await agent.post('/login').send({ username, password: VALID_PASSWORD });
+    await agent
+      .post(`/showtimes/${showtimeId}/book`)
+      .send({ seats: ['C3'], adultCount: 1, teenCount: 0, seniorCount: 0, disabledCount: 0 });
+    const booking = await prisma.booking.findFirst({ where: { showtimeId, seatLabel: 'C3' } });
+
+    const res = await request(app).post(`/bookings/${booking!.id}/cancel`);
+    expect(res.status).toBe(302);
+    expect(await prisma.booking.findUnique({ where: { id: booking!.id } })).not.toBeNull();
+  });
 });
