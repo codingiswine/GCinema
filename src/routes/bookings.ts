@@ -60,6 +60,15 @@ function seatLabels(totalSeats: number, cols: number): string[] {
   return labels;
 }
 
+// 모든 상영관의 맨 앞줄(A) 가운데 두 자리는 우대(장애인) 전용석으로 지정한다.
+// 한 줄이 너무 좁으면(예: 2열) "가운데 두 자리"가 앞줄 전체가 되어버려 의미가
+// 없으므로, 실제 상영관 규모(4열 이상)에서만 적용한다.
+function priorityDisabledSeats(cols: number): Set<string> {
+  if (cols < 4) return new Set();
+  const mid = Math.floor(cols / 2);
+  return new Set([`A${mid}`, `A${mid + 1}`]);
+}
+
 bookingsRouter.get('/showtimes/:id', requireLogin, asyncHandler(async (req, res) => {
   const showtimeId = Number(req.params.id);
   const showtime = await prisma.showtime.findUnique({
@@ -73,9 +82,11 @@ bookingsRouter.get('/showtimes/:id', requireLogin, asyncHandler(async (req, res)
   }
 
   const booked = new Set(showtime.bookings.map((b) => b.seatLabel));
+  const priority = priorityDisabledSeats(showtime.cols);
   const seats = seatLabels(showtime.totalSeats, showtime.cols).map((label) => ({
     label,
     booked: booked.has(label),
+    priority: priority.has(label),
   }));
   const rows = Math.ceil(showtime.totalSeats / showtime.cols);
   res.render('showtimeSeats', {
@@ -159,6 +170,12 @@ async function validateOrder(
     ...Array(counts.DISABLED).fill('DISABLED' as TicketCategory),
   ];
   const totalPrice = categoryBySeat.reduce((sum, c) => sum + TICKET_PRICES[c], 0);
+
+  const priority = priorityDisabledSeats(showtime.cols);
+  const priorityViolation = seats.find((label, i) => priority.has(label) && categoryBySeat[i] !== 'DISABLED');
+  if (priorityViolation) {
+    return { ok: false, status: 400, error: `${priorityViolation}은(는) 우대(장애인) 전용 좌석입니다.` };
+  }
 
   return { ok: true, showtime, seats, counts, categoryBySeat, totalPrice };
 }
@@ -288,54 +305,15 @@ bookingsRouter.post('/showtimes/:id/book', requireLogin, asyncHandler(async (req
   const showtimeId = Number(req.params.id);
   const { seats, adultCount, teenCount, seniorCount, disabledCount } = req.body;
 
-  const counts: Record<TicketCategory, number> = {
-    ADULT: Number(adultCount) || 0,
-    TEEN: Number(teenCount) || 0,
-    SENIOR: Number(seniorCount) || 0,
-    DISABLED: Number(disabledCount) || 0,
-  };
-  const totalTickets = counts.ADULT + counts.TEEN + counts.SENIOR + counts.DISABLED;
-
-  if (!Array.isArray(seats) || seats.length === 0 || totalTickets === 0) {
-    return res.status(400).json({ error: '관람인원과 좌석을 선택해주세요.' });
+  const check = await validateOrder(showtimeId, seats, { adultCount, teenCount, seniorCount, disabledCount });
+  if (!check.ok) {
+    return res.status(check.status).json({ error: check.error });
   }
-  if (seats.length !== totalTickets) {
-    return res.status(400).json({ error: '선택한 좌석 수와 관람인원 수가 일치하지 않습니다.' });
-  }
-
-  // 상영시간표에서 지난 회차를 숨기지만, URL로 직접 들어오는 경우까지 막으려면
-  // 예매 시점에 서버에서 한 번 더 확인해야 한다.
-  const showtime = await prisma.showtime.findUnique({ where: { id: showtimeId } });
-  if (!showtime) {
-    return res.status(404).json({ error: '상영 정보를 찾을 수 없습니다.' });
-  }
-  if (showtime.startAt.getTime() <= Date.now()) {
-    return res.status(400).json({ error: '이미 상영이 시작된 회차는 예매할 수 없습니다.' });
-  }
-
-  // 좌석 그리드는 서버가 totalSeats/cols로 정의하므로, 클라이언트가 보낸
-  // 좌석 번호도 그 그리드 안에 실제로 존재하는지 여기서 확인한다.
-  // (같은 좌석 중복은 아래 @@unique 제약이 잡아주지만, 없는 좌석은 못 잡는다.)
-  const validSeats = new Set(seatLabels(showtime.totalSeats, showtime.cols));
-  const unknownSeat = (seats as string[]).find((label) => !validSeats.has(label));
-  if (unknownSeat) {
-    return res.status(400).json({ error: `상영관에 없는 좌석입니다: ${unknownSeat}` });
-  }
-  if (new Set(seats as string[]).size !== seats.length) {
-    return res.status(400).json({ error: '같은 좌석을 중복해서 선택할 수 없습니다.' });
-  }
-
-  const categoryBySeat: TicketCategory[] = [
-    ...Array(counts.ADULT).fill('ADULT' as TicketCategory),
-    ...Array(counts.TEEN).fill('TEEN' as TicketCategory),
-    ...Array(counts.SENIOR).fill('SENIOR' as TicketCategory),
-    ...Array(counts.DISABLED).fill('DISABLED' as TicketCategory),
-  ];
-  const totalPrice = categoryBySeat.reduce((sum, c) => sum + TICKET_PRICES[c], 0);
+  const { seats: seatList, categoryBySeat, totalPrice } = check;
 
   try {
     await prisma.$transaction(
-      (seats as string[]).map((seatLabel, i) =>
+      seatList.map((seatLabel, i) =>
         prisma.booking.create({
           data: {
             showtimeId,

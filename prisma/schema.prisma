@@ -55,6 +55,8 @@ model Showtime {
   totalSeats  Int
   cols        Int
   bookings    Booking[]
+
+  @@index([movieId, startAt])
 }
 
 enum TicketCategory {
@@ -97,4 +99,5 @@ model Booking {
 
   @@index([showtimeId, seatLabel])
   @@index([reservationNo])
+  @@index([userId, cancelledAt])
 }

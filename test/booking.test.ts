@@ -18,6 +18,7 @@ describe('booking flow', () => {
   let pastShowtimeId: number;
   let cancelShowtimeId: number;
   let payShowtimeId: number;
+  let priorityShowtimeId: number;
 
   beforeAll(async () => {
     const movie = await prisma.movie.create({
@@ -51,10 +52,17 @@ describe('booking flow', () => {
       data: { movieId, theaterName: '1관', startAt: new Date(Date.now() + 24 * HOUR), totalSeats: 8, cols: 2 },
     });
     payShowtimeId = payShowtime.id;
+    // 앞줄 가운데 우대 전용석 테스트는 한 줄에 4석 이상 있어야 "가운데 두 자리"가
+    // 의미 있으므로(cols=2인 다른 픽스처는 앞줄 전체가 가운데가 되어버림) 별도
+    // 회차를 쓴다. cols=4 → 우대 전용석은 A2, A3.
+    const priorityShowtime = await prisma.showtime.create({
+      data: { movieId, theaterName: '1관', startAt: new Date(Date.now() + 24 * HOUR), totalSeats: 8, cols: 4 },
+    });
+    priorityShowtimeId = priorityShowtime.id;
   });
 
   afterAll(async () => {
-    const showtimeIds = [showtimeId, pastShowtimeId, cancelShowtimeId, payShowtimeId];
+    const showtimeIds = [showtimeId, pastShowtimeId, cancelShowtimeId, payShowtimeId, priorityShowtimeId];
     await prisma.booking.deleteMany({ where: { showtimeId: { in: showtimeIds } } });
     await prisma.movieLike.deleteMany({ where: { movieId } });
     await prisma.showtime.deleteMany({ where: { id: { in: showtimeIds } } });
@@ -559,5 +567,32 @@ describe('booking flow', () => {
     await intruderAgent.post('/login').send({ username: intruder, password: VALID_PASSWORD });
     const res = await intruderAgent.get(paid.headers.location);
     expect(res.status).toBe(404);
+  });
+
+  test('앞줄 가운데 두 자리는 우대 인원이 아니면 예매할 수 없다', async () => {
+    const username = `user1${rand()}`;
+    const agent = request.agent(app);
+    await signup(username);
+    await agent.post('/login').send({ username, password: VALID_PASSWORD });
+
+    const res = await agent
+      .post(`/showtimes/${priorityShowtimeId}/book`)
+      .send({ seats: ['A2'], adultCount: 1, teenCount: 0, seniorCount: 0, disabledCount: 0 });
+    expect(res.status).toBe(400);
+    expect(await prisma.booking.findFirst({ where: { showtimeId: priorityShowtimeId, seatLabel: 'A2' } })).toBeNull();
+  });
+
+  test('앞줄 가운데 두 자리는 우대 인원으로는 예매할 수 있다', async () => {
+    const username = `user1${rand()}`;
+    const agent = request.agent(app);
+    await signup(username);
+    await agent.post('/login').send({ username, password: VALID_PASSWORD });
+
+    const res = await agent
+      .post(`/showtimes/${priorityShowtimeId}/book`)
+      .send({ seats: ['A3'], adultCount: 0, teenCount: 0, seniorCount: 0, disabledCount: 1 });
+    expect(res.status).toBe(200);
+    const booking = await prisma.booking.findFirst({ where: { showtimeId: priorityShowtimeId, seatLabel: 'A3' } });
+    expect(booking!.category).toBe('DISABLED');
   });
 });

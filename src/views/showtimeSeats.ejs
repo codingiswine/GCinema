@@ -61,7 +61,7 @@
         <% if (seat.booked) { %>
           <div class="seat booked"><%= seat.label %></div>
         <% } else { %>
-          <button type="button" class="seat" data-label="<%= seat.label %>"><%= seat.label %></button>
+          <button type="button" class="seat<%= seat.priority ? ' seat-priority' : '' %>" data-label="<%= seat.label %>"><%= seat.label %></button>
         <% } %>
       <% }) %>
       </div>
@@ -87,6 +87,7 @@
       <span><i class="seat-swatch selected"></i> 선택</span>
       <span><i class="seat-swatch booked"></i> 예매 완료</span>
       <span><i class="seat-swatch blocked"></i> 선택 불가</span>
+      <span><i class="seat-swatch priority"></i> 우대 전용석</span>
     </div>
 
     <div class="seat-sidebar-block">
@@ -166,6 +167,14 @@
   var SEATS_FLAT = <%- JSON.stringify(seats.map(function (s) { return { label: s.label, booked: s.booked }; })) %>;
   var CLOCK_ICON = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><polyline points="12 7 12 12 15.5 13.5"></polyline></svg>';
   var WARNING_ICON = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2 20h20L12 3z"></path><line x1="12" y1="9" x2="12" y2="14"></line><circle cx="12" cy="17.2" r="1" fill="currentColor" stroke="none"></circle></svg>';
+  // 모든 상영관의 맨 앞줄(A) 가운데 두 자리는 우대(장애인) 전용석. 서버의
+  // priorityDisabledSeats()와 같은 규칙(4열 미만이면 "가운데"가 의미 없어 제외).
+  var PRIORITY_SEATS = (function () {
+    if (COLS < 4) return [];
+    var mid = Math.floor(COLS / 2);
+    return ['A' + mid, 'A' + (mid + 1)];
+  })();
+
   var counts = { ADULT: 0, TEEN: 0, SENIOR: 0, DISABLED: 0 };
   var acknowledged = { SENIOR: false, DISABLED: false };
   var selectedGroups = []; // array of arrays of seat labels (pairs or a single leftover seat)
@@ -224,20 +233,32 @@
     return partnerOf;
   }
 
+  // 우대 전용석은 "남은 인원 중 아직 안 채운 우대석 자리"가 있을 때만 고를 수
+  // 있다. 인원수는 성인→청소년→경로→우대 순으로 좌석에 배정되므로(서버와 동일
+  // 규칙), 지금까지 고른 좌석 수가 우대 이전 인원수 합계 이상일 때 다음 클릭이
+  // 우대 자리로 배정된다.
+  function canPickPrioritySeatNow() {
+    var nonDisabledTotal = counts.ADULT + counts.TEEN + counts.SENIOR;
+    return counts.DISABLED > 0 && selectedSeatCount() >= nonDisabledTotal && selectedSeatCount() < totalTickets();
+  }
+
   // 선택 가능한 좌석 중, 지금 남은 인원수로는 고를 수 없는 좌석에
   // seat-blocked 표시를 한다. 2명 이상 남았을 때 짝이 없는(1인 전용) 좌석만
   // 대상이며, 1명만 남았을 때는 아무 빈 좌석이나 고를 수 있어 막지 않는다.
+  // 우대 전용석은 이 규칙과 별개로, 우대 자리를 채울 차례가 아니면 항상 막는다.
   function updateBlockedSeats() {
     var remaining = totalTickets() - selectedSeatCount();
     var seatButtons = document.querySelectorAll('.seat:not(.booked)');
     seatButtons.forEach(function (el) { el.classList.remove('seat-blocked'); });
-    if (remaining < 2) return;
 
-    var partnerOf = computeSeatPartners();
+    var partnerOf = remaining >= 2 ? computeSeatPartners() : {};
+    var priorityOk = canPickPrioritySeatNow();
     seatButtons.forEach(function (el) {
       var label = el.dataset.label;
       if (selectedGroups.some(function (g) { return g.indexOf(label) !== -1; })) return;
-      if (!partnerOf[label]) el.classList.add('seat-blocked');
+      var pairBlocked = remaining >= 2 && !partnerOf[label];
+      var priorityBlocked = PRIORITY_SEATS.indexOf(label) !== -1 && remaining > 0 && !priorityOk;
+      if (pairBlocked || priorityBlocked) el.classList.add('seat-blocked');
     });
   }
 
@@ -342,6 +363,11 @@
 
       if (selectedSeatCount() >= total) {
         showError('선택 가능한 좌석 수를 초과했습니다.');
+        return;
+      }
+
+      if (PRIORITY_SEATS.indexOf(label) !== -1 && !canPickPrioritySeatNow()) {
+        showError('이 좌석은 우대(장애인) 전용석입니다. 우대 인원을 선택해주세요.');
         return;
       }
 
