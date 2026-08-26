@@ -16,6 +16,7 @@ describe('booking flow', () => {
   let movieId: number;
   let showtimeId: number;
   let pastShowtimeId: number;
+  let cancelShowtimeId: number;
 
   beforeAll(async () => {
     const movie = await prisma.movie.create({
@@ -38,12 +39,19 @@ describe('booking flow', () => {
       data: { movieId, theaterName: '1관', startAt: new Date(Date.now() - 2 * HOUR), totalSeats: 4, cols: 2 },
     });
     pastShowtimeId = pastShowtime.id;
+    // 취소 테스트는 예매/중복예매 테스트가 이미 채워둔 좌석과 겹치지 않도록
+    // 좌석이 넉넉한(A1~D2) 전용 회차를 따로 쓴다.
+    const cancelShowtime = await prisma.showtime.create({
+      data: { movieId, theaterName: '1관', startAt: new Date(Date.now() + 24 * HOUR), totalSeats: 8, cols: 2 },
+    });
+    cancelShowtimeId = cancelShowtime.id;
   });
 
   afterAll(async () => {
-    await prisma.booking.deleteMany({ where: { showtimeId: { in: [showtimeId, pastShowtimeId] } } });
+    const showtimeIds = [showtimeId, pastShowtimeId, cancelShowtimeId];
+    await prisma.booking.deleteMany({ where: { showtimeId: { in: showtimeIds } } });
     await prisma.movieLike.deleteMany({ where: { movieId } });
-    await prisma.showtime.deleteMany({ where: { id: { in: [showtimeId, pastShowtimeId] } } });
+    await prisma.showtime.deleteMany({ where: { id: { in: showtimeIds } } });
     await prisma.movie.delete({ where: { id: movieId } });
     await prisma.$disconnect();
   });
@@ -311,9 +319,9 @@ describe('booking flow', () => {
     await signup(username);
     await agent.post('/login').send({ username, password: VALID_PASSWORD });
     await agent
-      .post(`/showtimes/${showtimeId}/book`)
+      .post(`/showtimes/${cancelShowtimeId}/book`)
       .send({ seats: ['C1'], adultCount: 1, teenCount: 0, seniorCount: 0, disabledCount: 0 });
-    const booking = await prisma.booking.findFirst({ where: { showtimeId, seatLabel: 'C1' } });
+    const booking = await prisma.booking.findFirst({ where: { showtimeId: cancelShowtimeId, seatLabel: 'C1' } });
 
     const res = await agent.post(`/bookings/${booking!.id}/cancel`);
     expect(res.status).toBe(200);
@@ -321,7 +329,7 @@ describe('booking flow', () => {
     expect(await prisma.booking.findUnique({ where: { id: booking!.id } })).toBeNull();
 
     const rebook = await agent
-      .post(`/showtimes/${showtimeId}/book`)
+      .post(`/showtimes/${cancelShowtimeId}/book`)
       .send({ seats: ['C1'], adultCount: 1, teenCount: 0, seniorCount: 0, disabledCount: 0 });
     expect(rebook.status).toBe(200);
   });
@@ -332,9 +340,9 @@ describe('booking flow', () => {
     await signup(owner);
     await ownerAgent.post('/login').send({ username: owner, password: VALID_PASSWORD });
     await ownerAgent
-      .post(`/showtimes/${showtimeId}/book`)
+      .post(`/showtimes/${cancelShowtimeId}/book`)
       .send({ seats: ['C2'], adultCount: 1, teenCount: 0, seniorCount: 0, disabledCount: 0 });
-    const booking = await prisma.booking.findFirst({ where: { showtimeId, seatLabel: 'C2' } });
+    const booking = await prisma.booking.findFirst({ where: { showtimeId: cancelShowtimeId, seatLabel: 'C2' } });
 
     const intruder = `user1${rand()}`;
     const intruderAgent = request.agent(app);
@@ -352,9 +360,9 @@ describe('booking flow', () => {
     await signup(username);
     await agent.post('/login').send({ username, password: VALID_PASSWORD });
     await agent
-      .post(`/showtimes/${showtimeId}/book`)
-      .send({ seats: ['C3'], adultCount: 1, teenCount: 0, seniorCount: 0, disabledCount: 0 });
-    const booking = await prisma.booking.findFirst({ where: { showtimeId, seatLabel: 'C3' } });
+      .post(`/showtimes/${cancelShowtimeId}/book`)
+      .send({ seats: ['D1'], adultCount: 1, teenCount: 0, seniorCount: 0, disabledCount: 0 });
+    const booking = await prisma.booking.findFirst({ where: { showtimeId: cancelShowtimeId, seatLabel: 'D1' } });
 
     const res = await request(app).post(`/bookings/${booking!.id}/cancel`);
     expect(res.status).toBe(302);
@@ -401,5 +409,19 @@ describe('booking flow', () => {
     const res = await request(app).post(`/movies/${movieId}/like`);
     expect(res.status).toBe(302);
     expect(await prisma.movieLike.findFirst({ where: { movieId } })).toBeNull();
+  });
+
+  test('상영관에 없는 좌석 번호로는 예매할 수 없다', async () => {
+    const username = `user1${rand()}`;
+    const agent = request.agent(app);
+    await signup(username);
+    await agent.post('/login').send({ username, password: VALID_PASSWORD });
+
+    // 이 상영관은 totalSeats 4 / cols 2 이라 유효한 좌석은 A1, A2, B1, B2 뿐이다.
+    const res = await agent
+      .post(`/showtimes/${showtimeId}/book`)
+      .send({ seats: ['Z99'], adultCount: 1, teenCount: 0, seniorCount: 0, disabledCount: 0 });
+    expect(res.status).toBe(400);
+    expect(await prisma.booking.findFirst({ where: { showtimeId, seatLabel: 'Z99' } })).toBeNull();
   });
 });

@@ -99,6 +99,18 @@ bookingsRouter.post('/showtimes/:id/book', requireLogin, asyncHandler(async (req
     return res.status(400).json({ error: '이미 상영이 시작된 회차는 예매할 수 없습니다.' });
   }
 
+  // 좌석 그리드는 서버가 totalSeats/cols로 정의하므로, 클라이언트가 보낸
+  // 좌석 번호도 그 그리드 안에 실제로 존재하는지 여기서 확인한다.
+  // (같은 좌석 중복은 아래 @@unique 제약이 잡아주지만, 없는 좌석은 못 잡는다.)
+  const validSeats = new Set(seatLabels(showtime.totalSeats, showtime.cols));
+  const unknownSeat = (seats as string[]).find((label) => !validSeats.has(label));
+  if (unknownSeat) {
+    return res.status(400).json({ error: `상영관에 없는 좌석입니다: ${unknownSeat}` });
+  }
+  if (new Set(seats as string[]).size !== seats.length) {
+    return res.status(400).json({ error: '같은 좌석을 중복해서 선택할 수 없습니다.' });
+  }
+
   const categoryBySeat: TicketCategory[] = [
     ...Array(counts.ADULT).fill('ADULT' as TicketCategory),
     ...Array(counts.TEEN).fill('TEEN' as TicketCategory),
