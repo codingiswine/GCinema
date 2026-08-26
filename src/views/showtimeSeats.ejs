@@ -57,11 +57,11 @@
     <div class="seat-grid">
     <% for (let r = 0; r < rows; r++) { %>
       <div class="seat-row">
-      <% seats.slice(r * showtime.cols, r * showtime.cols + showtime.cols).forEach(function(seat, c) { %>
+      <% seats.slice(r * showtime.cols, r * showtime.cols + showtime.cols).forEach(function(seat) { %>
         <% if (seat.booked) { %>
           <div class="seat booked"><%= seat.label %></div>
         <% } else { %>
-          <button type="button" class="seat" data-row="<%= r %>" data-col="<%= c %>" data-label="<%= seat.label %>"><%= seat.label %></button>
+          <button type="button" class="seat" data-label="<%= seat.label %>"><%= seat.label %></button>
         <% } %>
       <% }) %>
       </div>
@@ -86,6 +86,7 @@
       <span><i class="seat-swatch available"></i> 선택 가능</span>
       <span><i class="seat-swatch selected"></i> 선택</span>
       <span><i class="seat-swatch booked"></i> 예매 완료</span>
+      <span><i class="seat-swatch blocked"></i> 선택 불가</span>
     </div>
 
     <div class="seat-sidebar-block">
@@ -160,6 +161,9 @@
   var PRICES = <%- JSON.stringify(prices) %>;
   var SHOWTIME_ID = <%= showtime.id %>;
   var MOVIE_AGE_RATING = <%- JSON.stringify(showtime.movie.ageRating) %>;
+  var COLS = <%= showtime.cols %>;
+  var GRID_ROWS = <%= rows %>;
+  var SEATS_FLAT = <%- JSON.stringify(seats.map(function (s) { return { label: s.label, booked: s.booked }; })) %>;
   var CLOCK_ICON = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><polyline points="12 7 12 12 15.5 13.5"></polyline></svg>';
   var WARNING_ICON = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2 20h20L12 3z"></path><line x1="12" y1="9" x2="12" y2="14"></line><circle cx="12" cy="17.2" r="1" fill="currentColor" stroke="none"></circle></svg>';
   var counts = { ADULT: 0, TEEN: 0, SENIOR: 0, DISABLED: 0 };
@@ -189,21 +193,54 @@
   function seatEl(label) {
     return document.querySelector('.seat[data-label="' + label + '"]');
   }
-  function seatAt(row, col) {
-    return document.querySelector('.seat[data-row="' + row + '"][data-col="' + col + '"]');
+
+  // 실제 상영관처럼, 한 행에서 예매되었거나 이번 세션에서 이미 선택된 좌석을
+  // 경계로 비어있는 구간(run)을 나누고 그 구간의 시작부터 2칸씩 고정 짝을
+  // 묶는다. 구간 길이가 홀수면 마지막 한 자리만 짝이 없는 "1인 전용" 좌석이
+  // 된다. 반환값은 { 좌석라벨: 짝라벨 또는 null }.
+  function computeSeatPartners() {
+    var takenLabels = {};
+    selectedGroups.flat().forEach(function (label) { takenLabels[label] = true; });
+    var partnerOf = {};
+
+    for (var r = 0; r < GRID_ROWS; r++) {
+      var rowSeats = SEATS_FLAT.slice(r * COLS, r * COLS + COLS);
+      var run = [];
+      var flush = function () {
+        for (var i = 0; i < run.length; i++) {
+          partnerOf[run[i]] = (i % 2 === 0) ? (run[i + 1] || null) : run[i - 1];
+        }
+        run = [];
+      };
+      rowSeats.forEach(function (seat) {
+        if (!seat.booked && !takenLabels[seat.label]) {
+          run.push(seat.label);
+        } else {
+          flush();
+        }
+      });
+      flush();
+    }
+    return partnerOf;
   }
-  function isSeatFree(el) {
-    if (!el || el.classList.contains('booked')) return false;
-    var label = el.dataset.label;
-    return selectedGroups.every(function (g) { return g.indexOf(label) === -1; });
-  }
-  // 실제 상영관처럼 좌석은 (1,2)(3,4)(5,6)... 고정된 짝으로만 묶인다.
-  // 즉 2번 좌석의 짝은 항상 1번이고, 3번 좌석의 짝은 항상 4번이라
-  // 2번-3번처럼 짝 경계를 넘나드는 조합은 나오지 않는다.
-  function findAdjacentPartner(row, col) {
-    var partnerCol = col % 2 === 0 ? col + 1 : col - 1;
-    var partner = seatAt(row, partnerCol);
-    return isSeatFree(partner) ? partner.dataset.label : null;
+
+  // 선택 가능한 좌석 중, 지금 남은 인원수로는 고를 수 없는 좌석에
+  // seat-blocked 표시를 한다: 2명 이상 남았으면 짝이 없는(1인 전용) 좌석이,
+  // 1명만 남았으면 짝이 있는(2인용) 좌석이 선택 불가 대상이다.
+  function updateBlockedSeats() {
+    var remaining = totalTickets() - selectedSeatCount();
+    var seatButtons = document.querySelectorAll('.seat:not(.booked)');
+    seatButtons.forEach(function (el) { el.classList.remove('seat-blocked'); });
+    if (remaining <= 0) return;
+
+    var partnerOf = computeSeatPartners();
+    seatButtons.forEach(function (el) {
+      var label = el.dataset.label;
+      if (selectedGroups.some(function (g) { return g.indexOf(label) !== -1; })) return;
+      var hasPartner = !!partnerOf[label];
+      var blocked = remaining >= 2 ? !hasPartner : hasPartner;
+      if (blocked) el.classList.add('seat-blocked');
+    });
   }
 
   function render() {
@@ -235,6 +272,8 @@
     var total = totalTickets();
     var confirmBtn = document.getElementById('confirmBookBtn');
     confirmBtn.disabled = !(total > 0 && selectedSeatCount() === total);
+
+    updateBlockedSeats();
   }
 
   function resetSelection() {
@@ -287,8 +326,6 @@
     el.addEventListener('click', function () {
       clearError();
       var label = el.dataset.label;
-      var row = Number(el.dataset.row);
-      var col = Number(el.dataset.col);
       var total = totalTickets();
 
       if (total === 0) {
@@ -311,10 +348,15 @@
       }
 
       var remaining = total - selectedSeatCount();
+      var partner = computeSeatPartners()[label] || null;
+
       if (remaining === 1) {
+        if (partner) {
+          showError('이 좌석은 두 명이 함께 앉는 자리라 혼자 선택할 수 없습니다. 다른 좌석을 선택해주세요.');
+          return;
+        }
         selectedGroups.push([label]);
       } else {
-        var partner = findAdjacentPartner(row, col);
         if (!partner) {
           showError('옆자리에 빈 좌석이 없어 짝을 지을 수 없습니다. 다른 좌석을 선택해주세요.');
           return;
@@ -325,6 +367,7 @@
     });
 
     el.addEventListener('mouseenter', function () {
+      if (el.classList.contains('seat-blocked')) return;
       var label = el.dataset.label;
       var inGroup = selectedGroups.some(function (g) { return g.indexOf(label) !== -1; });
       if (inGroup) return;
@@ -332,7 +375,7 @@
       el.classList.add('hover-preview');
       var remaining = totalTickets() - selectedSeatCount();
       if (remaining >= 2) {
-        var partner = findAdjacentPartner(Number(el.dataset.row), Number(el.dataset.col));
+        var partner = computeSeatPartners()[label];
         if (partner) {
           var partnerEl = seatEl(partner);
           if (partnerEl) partnerEl.classList.add('hover-preview');
