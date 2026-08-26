@@ -39,7 +39,7 @@ function seatLabels(totalSeats: number, cols: number): string[] {
   return labels;
 }
 
-bookingsRouter.get('/showtimes/:id', asyncHandler(async (req, res) => {
+bookingsRouter.get('/showtimes/:id', requireLogin, asyncHandler(async (req, res) => {
   const showtimeId = Number(req.params.id);
   const showtime = await prisma.showtime.findUnique({
     where: { id: showtimeId },
