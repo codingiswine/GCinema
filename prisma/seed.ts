@@ -65,8 +65,8 @@ const movieData = [
     totalSeats: 84,
     times: TOP_MOVIE_TIMES,
     satisfactionPercent: 98,
-    bookingRatePercent: 71,
-    cumulativeViewers: '729.5만',
+    bookingRatePercent: 72.1,
+    cumulativeViewers: '746만',
   },
   {
     title: '스파이더맨: 브랜드 뉴 데이',
@@ -92,8 +92,8 @@ const movieData = [
     totalSeats: 84,
     times: TOP_MOVIE_TIMES,
     satisfactionPercent: 97,
-    bookingRatePercent: 8.8,
-    cumulativeViewers: '817.3만',
+    bookingRatePercent: 9.3,
+    cumulativeViewers: '821.5만',
   },
   {
     title: '경주기행',
@@ -112,8 +112,8 @@ const movieData = [
     totalSeats: 42,
     times: ['10:30', '12:45', '17:20', '21:50'],
     satisfactionPercent: 95,
-    bookingRatePercent: 4.1,
-    cumulativeViewers: '15.2만',
+    bookingRatePercent: 3.7,
+    cumulativeViewers: '5,486',
   },
   {
     title: '오크 스트리트의 마지막 날',
@@ -139,8 +139,8 @@ const movieData = [
     totalSeats: 67,
     times: ['10:30', '13:10', '17:40', '20:50'],
     satisfactionPercent: 92,
-    bookingRatePercent: 3.7,
-    cumulativeViewers: '12.8만',
+    bookingRatePercent: 3.2,
+    cumulativeViewers: '1,850',
   },
 ];
 
