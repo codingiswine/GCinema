@@ -1,5 +1,9 @@
 # GCmediai 영화 티켓 예매 시스템
 
+GitHub: https://github.com/codingiswine/GCMediAI_Assignment
+
+과제라 깃허브를 private으로 진행했기에, 코드 히스토리 등을 확인을 위해 깃허브 계정 말씀해주시면 collaborators로 추가해서 보실 수 있게 하겠습니다.
+
 GCmediai 개발 직군 과제 제출용 프로젝트입니다. 가상의 영화관 "GCinema"를 배경으로, 회원가입부터 좌석 예매까지 한 번에 시연할 수 있는 서버 렌더링 웹앱으로 구현했습니다.
 
 ## 실행 방법
