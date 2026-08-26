@@ -271,7 +271,7 @@ button:hover { background: #444; }
   .seat-sidebar { flex: none; width: 100%; position: static; }
 }
 
-.btn-primary { background: #0f6e8c; padding: 10px 20px; }
+.btn-primary { background: #0f6e8c; padding: 10px 20px; color: #fff; text-decoration: none; }
 .btn-primary:hover { background: #0c5972; }
 .btn-primary:disabled { background: #ccc; cursor: not-allowed; }
 
