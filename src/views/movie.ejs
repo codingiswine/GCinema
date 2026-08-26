@@ -50,6 +50,42 @@
   </section>
 </div>
 
+<!-- 로그인 필요 안내 팝업 -->
+<div id="loginRequiredModal" class="modal-overlay" style="display:none;">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span>알림</span>
+      <button type="button" class="modal-close" data-modal="loginRequiredModal">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p>로그인이 필요한 서비스입니다.</p>
+    </div>
+    <button type="button" class="modal-confirm" id="loginRequiredConfirmBtn">확인</button>
+  </div>
+</div>
+
+<script>
+  var LOGGED_IN = <%- JSON.stringify(!!userId) %>;
+
+  document.querySelectorAll('.modal-close').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      document.getElementById(btn.dataset.modal).style.display = 'none';
+    });
+  });
+  document.getElementById('loginRequiredConfirmBtn').addEventListener('click', function () {
+    window.location.href = '/login';
+  });
+
+  if (!LOGGED_IN) {
+    document.querySelectorAll('.showtime-btn').forEach(function (el) {
+      el.addEventListener('click', function (e) {
+        e.preventDefault();
+        document.getElementById('loginRequiredModal').style.display = 'flex';
+      });
+    });
+  }
+</script>
+
 <%- include('partials/footer') %>
 </body>
 </html>
