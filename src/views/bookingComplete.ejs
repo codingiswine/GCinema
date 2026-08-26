@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ko">
+<%- include('partials/head') %>
+<body>
+<%- include('partials/nav') %>
+
+<div class="complete-box">
+  <div class="complete-badge">
+    <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="4 12.5 9.5 18 20 6.5"></polyline>
+    </svg>
+  </div>
+  <h1>결제가 완료되었습니다</h1>
+  <p class="complete-sub">예매 내역은 마이페이지에서 다시 확인할 수 있습니다.</p>
+
+  <p class="complete-reservation">
+    <span>예매번호</span>
+    <strong><%= reservationNo %></strong>
+  </p>
+
+  <dl class="complete-detail">
+    <dt>영화</dt>
+    <dd>
+      <span class="age-badge age-<%= showtime.movie.ageRating %>"><%= showtime.movie.ageRating %></span>
+      <%= showtime.movie.title %>
+    </dd>
+
+    <dt>상영관</dt>
+    <dd><%= showtime.theaterName %></dd>
+
+    <dt>일시</dt>
+    <dd><%= new Date(showtime.startAt).toLocaleString('ko-KR') %></dd>
+
+    <dt>좌석</dt>
+    <dd><%= bookings.map(function (b) { return b.seatLabel; }).join(', ') %></dd>
+
+    <dt>관람인원</dt>
+    <dd><%= bookings.map(function (b) { return categoryLabels[b.category]; }).join(', ') %></dd>
+
+    <dt>결제수단</dt>
+    <dd><%= paymentMethodLabel %></dd>
+
+    <dt>결제금액</dt>
+    <dd class="complete-total"><%= totalPrice.toLocaleString() %>원</dd>
+  </dl>
+
+  <div class="complete-actions">
+    <a class="btn-primary" href="/bookings">예매 내역 보기</a>
+    <a class="btn-secondary" href="/movies">다른 영화 예매</a>
+  </div>
+</div>
+
+<%- include('partials/footer') %>
+</body>
+</html>

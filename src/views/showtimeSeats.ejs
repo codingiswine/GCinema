@@ -152,7 +152,7 @@
     </div>
     <div id="checkoutBody" class="checkout-modal-body"></div>
     <div class="checkout-modal-footer">
-      <button type="button" id="checkoutConfirmBtn" class="btn-checkout">결제하기</button>
+      <button type="button" id="checkoutConfirmBtn" class="btn-checkout">확인하고 결제하기</button>
     </div>
   </div>
 </div>
@@ -383,28 +383,17 @@
     });
   });
 
-  function submitBooking() {
-    var seatList = selectedGroups.flat();
-    fetch('/showtimes/' + SHOWTIME_ID + '/book', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        seats: seatList,
-        adultCount: counts.ADULT,
-        teenCount: counts.TEEN,
-        seniorCount: counts.SENIOR,
-        disabledCount: counts.DISABLED,
-      }),
-    })
-      .then(function (res) { return res.json().then(function (body) { return { status: res.status, body: body }; }); })
-      .then(function (result) {
-        if (result.status === 200) {
-          window.location.href = '/bookings';
-        } else {
-          showError(result.body.error || '예매에 실패했습니다.');
-          window.location.reload();
-        }
-      });
+  // 좌석 선택이 끝나면 바로 예매를 확정하지 않고 결제 페이지로 넘어간다.
+  // (좌석/인원은 URL로 넘기고, 결제 페이지에서 서버가 다시 검증한다)
+  function goToCheckout() {
+    var params = new URLSearchParams({
+      seats: selectedGroups.flat().join(','),
+      adultCount: counts.ADULT,
+      teenCount: counts.TEEN,
+      seniorCount: counts.SENIOR,
+      disabledCount: counts.DISABLED,
+    });
+    window.location.href = '/showtimes/' + SHOWTIME_ID + '/checkout?' + params.toString();
   }
 
   function buildCheckoutBody() {
@@ -424,13 +413,7 @@
       );
     }
 
-    parts.push(
-      '<div class="checkout-section">' +
-        '<div class="checkout-section-head">' + CLOCK_ICON + '<strong>취소/환불 불가 안내</strong></div>' +
-        '<p>모바일을 통해 취소하실 경우 상영시간 20분 전까지 취소 가능하며, 현장에서 취소하실 경우 상영시간 이전까지 취소하실 수 있으며 상영시간 이후 취소/환불/결제 수단 변경은 불가합니다.</p>' +
-      '</div>'
-    );
-
+    // 취소/환불 정책은 다음 단계인 결제 페이지에서 동의를 받으므로 여기서는 빼둔다.
     parts.push(
       '<div class="checkout-section">' +
         '<div class="checkout-section-head">' + WARNING_ICON + '<strong>입장 시 유의사항</strong></div>' +
@@ -474,7 +457,7 @@
 
   document.getElementById('checkoutConfirmBtn').addEventListener('click', function () {
     document.getElementById('checkoutModal').style.display = 'none';
-    submitBooking();
+    goToCheckout();
   });
 
   render();

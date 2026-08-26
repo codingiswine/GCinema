@@ -64,6 +64,13 @@ enum TicketCategory {
   DISABLED
 }
 
+enum PaymentMethod {
+  CARD
+  KAKAO_PAY
+  NAVER_PAY
+  BANK_TRANSFER
+}
+
 model Booking {
   id         Int            @id @default(autoincrement())
   user       User           @relation(fields: [userId], references: [id])
@@ -75,5 +82,11 @@ model Booking {
   price      Int
   bookedAt   DateTime       @default(now())
 
+  // 한 번의 결제로 잡힌 좌석들이 공유하는 예매번호와 결제수단.
+  // 시드로 미리 채워둔 좌석은 결제를 거치지 않으므로 null이다.
+  reservationNo String?
+  paymentMethod PaymentMethod?
+
   @@unique([showtimeId, seatLabel])
+  @@index([reservationNo])
 }

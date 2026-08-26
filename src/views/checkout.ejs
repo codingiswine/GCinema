@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ko">
+<%- include('partials/head') %>
+<body>
+<%- include('partials/nav') %>
+
+<h1 class="checkout-title">결제</h1>
+
+<form class="checkout-layout" method="post" action="/showtimes/<%= showtime.id %>/pay">
+  <input type="hidden" name="seats" value="<%= seats.join(',') %>" />
+  <input type="hidden" name="adultCount" value="<%= counts.ADULT %>" />
+  <input type="hidden" name="teenCount" value="<%= counts.TEEN %>" />
+  <input type="hidden" name="seniorCount" value="<%= counts.SENIOR %>" />
+  <input type="hidden" name="disabledCount" value="<%= counts.DISABLED %>" />
+
+  <div class="checkout-main">
+    <section class="pay-card">
+      <h2>예매 정보</h2>
+      <div class="pay-movie">
+        <% if (showtime.movie.posterUrl) { %>
+          <img class="pay-poster" src="<%= showtime.movie.posterUrl %>" alt="<%= showtime.movie.title %> 포스터" />
+        <% } %>
+        <div>
+          <p class="pay-movie-title">
+            <span class="age-badge age-<%= showtime.movie.ageRating %>"><%= showtime.movie.ageRating %></span>
+            <strong><%= showtime.movie.title %></strong>
+          </p>
+          <p class="pay-movie-meta"><%= showtime.theaterName %></p>
+          <p class="pay-movie-meta"><%= new Date(showtime.startAt).toLocaleString('ko-KR') %></p>
+          <p class="pay-movie-meta">좌석 <strong><%= seats.join(', ') %></strong></p>
+        </div>
+      </div>
+    </section>
+
+    <section class="pay-card">
+      <h2>결제 금액</h2>
+      <table class="pay-table">
+        <tbody>
+          <% lines.forEach(function (line) { %>
+            <tr>
+              <th><%= line.label %> <%= line.count %>명</th>
+              <td><%= line.unitPrice.toLocaleString() %>원 × <%= line.count %></td>
+              <td class="pay-amount"><%= line.amount.toLocaleString() %>원</td>
+            </tr>
+          <% }) %>
+        </tbody>
+        <tfoot>
+          <tr>
+            <th colspan="2">총 결제금액</th>
+            <td class="pay-total"><%= totalPrice.toLocaleString() %>원</td>
+          </tr>
+        </tfoot>
+      </table>
+    </section>
+
+    <section class="pay-card">
+      <h2>결제 수단</h2>
+      <div class="pay-methods">
+        <% paymentMethods.forEach(function (m, i) { %>
+          <label class="pay-method">
+            <input type="radio" name="paymentMethod" value="<%= m.value %>" <%= i === 0 ? 'checked' : '' %> />
+            <span><%= m.label %></span>
+          </label>
+        <% }) %>
+      </div>
+      <p class="pay-mock-note">※ 과제용 모의 결제입니다. 실제 결제(PG사) 연동 없이 선택한 결제수단만 기록됩니다.</p>
+    </section>
+
+    <section class="pay-card">
+      <h2>취소/환불 정책에 대한 동의</h2>
+      <ul class="pay-policy">
+        <% cancelPolicy.forEach(function (line) { %>
+          <li><%= line %></li>
+        <% }) %>
+      </ul>
+      <label class="pay-agree">
+        <input type="checkbox" id="agreeCancelPolicy" name="agreeCancelPolicy" />
+        <span>위 취소/환불 정책을 확인하였으며 이에 동의합니다. <em>(필수)</em></span>
+      </label>
+    </section>
+  </div>
+
+  <aside class="checkout-side">
+    <p class="pay-side-label">최종 결제금액</p>
+    <p class="pay-side-total"><%= totalPrice.toLocaleString() %>원</p>
+    <p class="pay-side-seats"><%= showtime.movie.title %> · <%= seats.join(', ') %></p>
+    <button type="submit" id="payBtn" class="btn-checkout" disabled><%= totalPrice.toLocaleString() %>원 결제하기</button>
+    <p id="payHint" class="pay-side-hint">취소/환불 정책에 동의해야 결제할 수 있습니다.</p>
+    <a class="pay-side-back" href="/showtimes/<%= showtime.id %>">좌석 다시 선택</a>
+  </aside>
+</form>
+
+<script>
+  // 정책 동의 전에는 결제 버튼을 잠가둔다. (서버에서도 동의 여부를 다시 확인한다)
+  var agree = document.getElementById('agreeCancelPolicy');
+  var payBtn = document.getElementById('payBtn');
+  var payHint = document.getElementById('payHint');
+
+  agree.addEventListener('change', function () {
+    payBtn.disabled = !agree.checked;
+    payHint.style.visibility = agree.checked ? 'hidden' : 'visible';
+  });
+</script>
+
+<%- include('partials/footer') %>
+</body>
+</html>

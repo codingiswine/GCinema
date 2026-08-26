@@ -17,6 +17,7 @@ describe('booking flow', () => {
   let showtimeId: number;
   let pastShowtimeId: number;
   let cancelShowtimeId: number;
+  let payShowtimeId: number;
 
   beforeAll(async () => {
     const movie = await prisma.movie.create({
@@ -45,10 +46,15 @@ describe('booking flow', () => {
       data: { movieId, theaterName: '1관', startAt: new Date(Date.now() + 24 * HOUR), totalSeats: 8, cols: 2 },
     });
     cancelShowtimeId = cancelShowtime.id;
+    // 결제 테스트도 다른 테스트가 잡아둔 좌석과 겹치지 않도록 전용 회차를 쓴다.
+    const payShowtime = await prisma.showtime.create({
+      data: { movieId, theaterName: '1관', startAt: new Date(Date.now() + 24 * HOUR), totalSeats: 8, cols: 2 },
+    });
+    payShowtimeId = payShowtime.id;
   });
 
   afterAll(async () => {
-    const showtimeIds = [showtimeId, pastShowtimeId, cancelShowtimeId];
+    const showtimeIds = [showtimeId, pastShowtimeId, cancelShowtimeId, payShowtimeId];
     await prisma.booking.deleteMany({ where: { showtimeId: { in: showtimeIds } } });
     await prisma.movieLike.deleteMany({ where: { movieId } });
     await prisma.showtime.deleteMany({ where: { id: { in: showtimeIds } } });
@@ -423,5 +429,96 @@ describe('booking flow', () => {
       .send({ seats: ['Z99'], adultCount: 1, teenCount: 0, seniorCount: 0, disabledCount: 0 });
     expect(res.status).toBe(400);
     expect(await prisma.booking.findFirst({ where: { showtimeId, seatLabel: 'Z99' } })).toBeNull();
+  });
+
+  test('결제 페이지는 선택한 좌석과 결제 금액을 보여준다', async () => {
+    const username = `user1${rand()}`;
+    const agent = request.agent(app);
+    await signup(username);
+    await agent.post('/login').send({ username, password: VALID_PASSWORD });
+
+    const res = await agent.get(
+      `/showtimes/${payShowtimeId}/checkout?seats=A1,A2&adultCount=2&teenCount=0&seniorCount=0&disabledCount=0`
+    );
+    expect(res.status).toBe(200);
+    expect(res.text).toContain('A1');
+    expect(res.text).toContain('A2');
+    expect(res.text).toContain('32,000');
+    expect(res.text).toContain('20분전까지 취소 가능');
+  });
+
+  test('취소/환불 정책에 동의하지 않으면 결제할 수 없다', async () => {
+    const username = `user1${rand()}`;
+    const agent = request.agent(app);
+    await signup(username);
+    await agent.post('/login').send({ username, password: VALID_PASSWORD });
+
+    const res = await agent.post(`/showtimes/${payShowtimeId}/pay`).send({
+      seats: 'B1,B2',
+      adultCount: 2,
+      teenCount: 0,
+      seniorCount: 0,
+      disabledCount: 0,
+      paymentMethod: 'CARD',
+      // agreeCancelPolicy 없음
+    });
+    expect(res.status).toBe(400);
+    expect(await prisma.booking.findFirst({ where: { showtimeId: payShowtimeId, seatLabel: 'B1' } })).toBeNull();
+  });
+
+  test('결제하면 예매번호와 결제수단이 저장되고 완료 화면으로 이동한다', async () => {
+    const username = `user1${rand()}`;
+    const agent = request.agent(app);
+    await signup(username);
+    await agent.post('/login').send({ username, password: VALID_PASSWORD });
+
+    const res = await agent.post(`/showtimes/${payShowtimeId}/pay`).send({
+      seats: 'D1,D2',
+      adultCount: 2,
+      teenCount: 0,
+      seniorCount: 0,
+      disabledCount: 0,
+      paymentMethod: 'KAKAO_PAY',
+      agreeCancelPolicy: 'on',
+    });
+    expect(res.status).toBe(302);
+    expect(res.headers.location).toMatch(/^\/bookings\/complete\?no=/);
+
+    const saved = await prisma.booking.findMany({
+      where: { showtimeId: payShowtimeId, seatLabel: { in: ['D1', 'D2'] } },
+    });
+    expect(saved).toHaveLength(2);
+    expect(saved[0].paymentMethod).toBe('KAKAO_PAY');
+    expect(saved[0].reservationNo).toBeTruthy();
+    // 같은 결제로 잡힌 좌석은 예매번호를 공유한다.
+    expect(saved[0].reservationNo).toBe(saved[1].reservationNo);
+
+    const complete = await agent.get(res.headers.location);
+    expect(complete.status).toBe(200);
+    expect(complete.text).toContain(saved[0].reservationNo!);
+  });
+
+  test('다른 사람의 예매번호로는 완료 화면을 볼 수 없다', async () => {
+    const owner = `user1${rand()}`;
+    const ownerAgent = request.agent(app);
+    await signup(owner);
+    await ownerAgent.post('/login').send({ username: owner, password: VALID_PASSWORD });
+    const paid = await ownerAgent.post(`/showtimes/${payShowtimeId}/pay`).send({
+      seats: 'C1',
+      adultCount: 1,
+      teenCount: 0,
+      seniorCount: 0,
+      disabledCount: 0,
+      paymentMethod: 'CARD',
+      agreeCancelPolicy: 'on',
+    });
+    expect(paid.status).toBe(302);
+
+    const intruder = `user1${rand()}`;
+    const intruderAgent = request.agent(app);
+    await signup(intruder);
+    await intruderAgent.post('/login').send({ username: intruder, password: VALID_PASSWORD });
+    const res = await intruderAgent.get(paid.headers.location);
+    expect(res.status).toBe(404);
   });
 });
