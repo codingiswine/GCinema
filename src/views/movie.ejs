@@ -41,7 +41,7 @@
         <p>선택한 날짜에는 상영 정보가 없습니다.</p>
       <% } %>
     <% } else { %>
-      <p class="schedule-hall-label"><%= showtimes[0].theaterName %> · 리클라이너+일반 · 총 <%= showtimes[0].totalSeats %>석</p>
+      <p class="schedule-hall-label"><%= showtimes[0].theaterName %> · 리클라이너 · 총 <%= showtimes[0].totalSeats %>석</p>
       <div class="showtime-list">
         <% showtimes.forEach(function(st) { %>
           <a class="showtime-btn" href="/showtimes/<%= st.id %>" data-start="<%= st.startAt.toISOString() %>">
