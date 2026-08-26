@@ -196,19 +196,21 @@ async function main() {
     }
     await prisma.showtime.createMany({ data: showtimeData });
 
-    const createdShowtimes = await prisma.showtime.findMany({ where: { movieId: movie.id } });
-    const bookingData: { showtimeId: number; seatLabel: string; userId: number; category: TicketCategory; price: number }[] = [];
-    for (const st of createdShowtimes) {
-      pickRandomSeats(st.totalSeats, st.cols, OCCUPANCY_RATIO).forEach((seatLabel) => {
-        bookingData.push({ showtimeId: st.id, seatLabel, userId: seedUser.id, category: 'ADULT', price: 16000 });
-      });
-    }
-    if (bookingData.length > 0) {
-      await prisma.booking.createMany({ data: bookingData });
-    }
+    // 좌석 페어링 로직 테스트를 위해 무작위 사전 예약 채우기를 잠시 꺼둠.
+    // 다시 켜려면 아래 주석을 해제.
+    // const createdShowtimes = await prisma.showtime.findMany({ where: { movieId: movie.id } });
+    // const bookingData: { showtimeId: number; seatLabel: string; userId: number; category: TicketCategory; price: number }[] = [];
+    // for (const st of createdShowtimes) {
+    //   pickRandomSeats(st.totalSeats, st.cols, OCCUPANCY_RATIO).forEach((seatLabel) => {
+    //     bookingData.push({ showtimeId: st.id, seatLabel, userId: seedUser.id, category: 'ADULT', price: 16000 });
+    //   });
+    // }
+    // if (bookingData.length > 0) {
+    //   await prisma.booking.createMany({ data: bookingData });
+    // }
   }
 
-  console.log(`시딩 완료: 영화 ${movieData.length}개, ${DAYS_AHEAD}일치 상영시간표, 회차별 좌석 ${Math.round(OCCUPANCY_RATIO * 100)}% 랜덤 예약`);
+  console.log(`시딩 완료: 영화 ${movieData.length}개, ${DAYS_AHEAD}일치 상영시간표 (좌석은 모두 빈 상태)`);
 }
 
 main()

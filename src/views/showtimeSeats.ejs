@@ -197,12 +197,13 @@
     var label = el.dataset.label;
     return selectedGroups.every(function (g) { return g.indexOf(label) === -1; });
   }
+  // 실제 상영관처럼 좌석은 (1,2)(3,4)(5,6)... 고정된 짝으로만 묶인다.
+  // 즉 2번 좌석의 짝은 항상 1번이고, 3번 좌석의 짝은 항상 4번이라
+  // 2번-3번처럼 짝 경계를 넘나드는 조합은 나오지 않는다.
   function findAdjacentPartner(row, col) {
-    var right = seatAt(row, col + 1);
-    if (isSeatFree(right)) return right.dataset.label;
-    var left = seatAt(row, col - 1);
-    if (isSeatFree(left)) return left.dataset.label;
-    return null;
+    var partnerCol = col % 2 === 0 ? col + 1 : col - 1;
+    var partner = seatAt(row, partnerCol);
+    return isSeatFree(partner) ? partner.dataset.label : null;
   }
 
   function render() {
