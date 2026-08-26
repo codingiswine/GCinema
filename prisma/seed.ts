@@ -6,6 +6,9 @@ const prisma = new PrismaClient();
 const DAYS_AHEAD = 7;
 const COLS = 14;
 const OCCUPANCY_RATIO = 0.1;
+// 로컬 시연용 더미 계정 비밀번호. 실제 서비스라면 시드에 두지 않을 값이지만,
+// 리뷰어가 관람 이력이 있는 화면을 바로 볼 수 있어야 해서 README와 함께 공개한다.
+const DEMO_PASSWORD = 'Demo1234!';
 
 // Mirrors seatLabels() in src/routes/bookings.ts — kept as a small local
 // copy so the seed script doesn't depend on route module internals.
@@ -142,6 +145,12 @@ const movieData = [
 ];
 
 async function main() {
+  // Movie/Showtime을 참조하는 행을 먼저 비운다. 앱을 한 번이라도 써보면
+  // 좋아요·후기·결제시도가 쌓이는데, 그 상태로 재시딩하면 외래키 위반(P2003)으로
+  // 실패하기 때문에 삭제 순서를 참조 방향의 역순으로 맞춰야 한다.
+  await prisma.movieReview.deleteMany();
+  await prisma.movieLike.deleteMany();
+  await prisma.checkoutAttempt.deleteMany();
   await prisma.booking.deleteMany();
   await prisma.showtime.deleteMany();
   await prisma.movie.deleteMany();
@@ -208,7 +217,65 @@ async function main() {
     }
   }
 
+  // 마이페이지의 "내가 본 영화"·"나의 영화일기"는 상영이 끝난 예매가 있어야
+  // 내용이 보이는데, 지난 회차는 예매 자체가 막혀 있어 새로 가입한 사람은
+  // 두 탭을 영원히 빈 화면으로만 보게 된다. 그래서 관람 이력이 이미 있는
+  // 데모 계정을 하나 만들어 둔다(README에 로그인 정보 안내).
+  const demoUser = await prisma.user.upsert({
+    where: { username: 'demo01' },
+    update: {},
+    create: {
+      username: 'demo01',
+      email: 'demo01@gcinema.local',
+      phone: '010-0000-0002',
+      passwordHash: await bcrypt.hash(DEMO_PASSWORD, 10),
+    },
+  });
+
+  // 어제 회차를 직접 만들어 관람 이력으로 쓴다. "오늘 지나간 회차"를 고르면
+  // 새벽에 시딩할 때 아직 지난 회차가 없어 이력이 비므로, 시딩 시각과 무관하게
+  // 항상 같은 결과가 나오도록 어제로 고정한다. 상영시간표는 오늘부터 보여주므로
+  // 이 회차가 예매 화면에 섞여 보이지는 않는다.
+  const watchedMovies = await prisma.movie.findMany({ orderBy: { id: 'asc' }, take: 2 });
+  const pastShowtimes = [];
+  for (const movie of watchedMovies) {
+    // 상영관·좌석수는 그 영화의 다른 회차와 똑같이 맞춘다(영화마다 상영관이 다름).
+    const sample = await prisma.showtime.findFirst({ where: { movieId: movie.id } });
+    if (!sample) continue;
+    const startAt = new Date(today);
+    startAt.setDate(startAt.getDate() - 1);
+    startAt.setHours(19, 30, 0, 0);
+    const st = await prisma.showtime.create({
+      data: {
+        movieId: movie.id,
+        theaterName: sample.theaterName,
+        startAt,
+        totalSeats: sample.totalSeats,
+        cols: sample.cols,
+      },
+    });
+    pastShowtimes.push(st);
+    await prisma.booking.create({
+      data: {
+        showtimeId: st.id,
+        seatLabel: 'G7',
+        userId: demoUser.id,
+        category: 'ADULT',
+        price: 16000,
+        reservationNo: `G-DEMO-${st.id}`,
+        paymentMethod: 'CARD',
+      },
+    });
+  }
+  // 한 편은 평점·한줄평까지 남겨둬서 후기가 있는 상태와 없는 상태를 모두 보여준다.
+  if (pastShowtimes.length > 0) {
+    await prisma.movieReview.create({
+      data: { userId: demoUser.id, movieId: pastShowtimes[0].movieId, rating: 4, comment: '기대한 만큼 재미있었어요.' },
+    });
+  }
+
   console.log(`시딩 완료: 영화 ${movieData.length}개, ${DAYS_AHEAD}일치 상영시간표, 회차별 좌석 ${Math.round(OCCUPANCY_RATIO * 100)}% 랜덤 예약`);
+  console.log(`데모 계정: demo01 / ${DEMO_PASSWORD} (관람 이력 ${pastShowtimes.length}건 — 마이페이지 확인용)`);
 }
 
 main()
