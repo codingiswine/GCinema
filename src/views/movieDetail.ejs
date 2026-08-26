@@ -60,21 +60,10 @@
     <% }) %>
   </div>
 
-  <a class="btn-primary detail-book-btn" href="/movies/<%= movie.id %>" data-age-rating="<%= movie.ageRating %>">예매하기</a>
+  <a class="btn-primary detail-book-btn" href="/movies/<%= movie.id %>">예매하기</a>
 </div>
 
-<%- include('partials/ageGateModal') %>
 <%- include('partials/footer') %>
-<script>
-  var detailBookBtn = document.querySelector('.detail-book-btn');
-  detailBookBtn.addEventListener('click', function (e) {
-    var rating = detailBookBtn.dataset.ageRating;
-    if (ageGateNeeded(rating)) {
-      e.preventDefault();
-      openAgeGate(rating, function () { window.location.href = detailBookBtn.href; });
-    }
-  });
-</script>
 <script>
   function showToast(message) {
     var toast = document.createElement('div');

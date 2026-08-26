@@ -224,6 +224,13 @@ button:hover { background: #444; }
 .btn-primary:hover { background: #0c5972; }
 .btn-primary:disabled { background: #ccc; cursor: not-allowed; }
 
+.btn-checkout {
+  display: block; width: 100%; text-align: center; text-decoration: none;
+  background: #e4002b; color: #fff; padding: 10px 20px; font-weight: 700;
+}
+.btn-checkout:hover { background: #c40025; }
+.btn-checkout:disabled { background: #ccc; cursor: not-allowed; }
+
 .modal-overlay {
   position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5);
   display: flex; align-items: center; justify-content: center; z-index: 100;
@@ -239,13 +246,23 @@ button:hover { background: #444; }
 .modal-confirm { display: block; margin: 0 auto 18px; background: #0f6e8c; padding: 8px 24px; }
 .modal-confirm:hover { background: #0c5972; }
 
-.age-gate-body { text-align: center; }
-.age-gate-body p { text-align: left; }
-.age-gate-badge {
-  display: block; margin: 0 auto 10px; width: 48px; height: 48px;
-  border-radius: 10px; font-size: 1.3rem;
+.checkout-modal-box {
+  max-width: 480px; display: flex; flex-direction: column; max-height: 85vh;
 }
-.age-gate-title { font-weight: 700; font-size: 1rem; text-align: center !important; margin: 0 0 12px !important; }
+.checkout-modal-header {
+  display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;
+  padding: 18px 18px 10px; font-size: 1.1rem; font-weight: 800; color: #111;
+}
+.modal-close-plain { background: none; border: none; font-size: 1.3rem; color: #333; cursor: pointer; padding: 0; line-height: 1; }
+.checkout-modal-body { padding: 4px 18px 8px; overflow-y: auto; font-size: 0.85rem; color: #333; }
+.checkout-section { padding: 14px 0; border-top: 1px solid #eee; }
+.checkout-section:first-child { border-top: none; padding-top: 4px; }
+.checkout-section-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 0.95rem; color: #111; }
+.checkout-section-head .age-badge { flex-shrink: 0; }
+.checkout-section p { margin: 0 0 6px; line-height: 1.5; }
+.checkout-note { font-size: 0.8rem; color: #666; }
+.checkout-note-red { color: #e4002b; }
+.checkout-modal-footer { padding: 12px 18px 18px; flex-shrink: 0; }
 
 .age-badge {
   display: inline-flex; align-items: center; justify-content: center;
