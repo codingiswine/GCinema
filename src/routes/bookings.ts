@@ -205,6 +205,14 @@ bookingsRouter.get('/showtimes/:id/checkout', requireLogin, asyncHandler(async (
       amount: counts[c] * TICKET_PRICES[c],
     }));
 
+  // 결제(POST /pay)가 성공해야만 Booking이 생기므로, 이 기록이 없으면
+  // "좌석까지 골랐지만 결제는 안 한 사람"이 DB 어디에도 남지 않는다. 새로고침
+  // 때마다 한 줄씩 쌓이는 단순한 방식이지만, 이탈 지점을 마케팅에 활용하려면
+  // 완벽한 중복 제거보다 최소한의 기록이 우선이라고 판단했다.
+  await prisma.checkoutAttempt.create({
+    data: { userId: req.session.userId!, showtimeId, seats: seats.join(','), totalPrice },
+  });
+
   res.render('checkout', {
     showtime,
     seats,
@@ -272,6 +280,12 @@ bookingsRouter.post('/showtimes/:id/pay', requireLogin, asyncHandler(async (req,
     }
     throw err;
   }
+
+  // 결제까지 이어진 시도는 이탈이 아니므로 completedAt을 채운다.
+  await prisma.checkoutAttempt.updateMany({
+    where: { userId: req.session.userId!, showtimeId, seats: seatList.join(','), completedAt: null },
+    data: { completedAt: new Date() },
+  });
 
   res.redirect(`/bookings/complete?no=${encodeURIComponent(reservationNo)}`);
 }));

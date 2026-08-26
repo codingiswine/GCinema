@@ -63,6 +63,7 @@ describe('booking flow', () => {
 
   afterAll(async () => {
     const showtimeIds = [showtimeId, pastShowtimeId, cancelShowtimeId, payShowtimeId, priorityShowtimeId];
+    await prisma.checkoutAttempt.deleteMany({ where: { showtimeId: { in: showtimeIds } } });
     await prisma.booking.deleteMany({ where: { showtimeId: { in: showtimeIds } } });
     await prisma.movieLike.deleteMany({ where: { movieId } });
     await prisma.showtime.deleteMany({ where: { id: { in: showtimeIds } } });
@@ -594,5 +595,47 @@ describe('booking flow', () => {
     expect(res.status).toBe(200);
     const booking = await prisma.booking.findFirst({ where: { showtimeId: priorityShowtimeId, seatLabel: 'A3' } });
     expect(booking!.category).toBe('DISABLED');
+  });
+
+  test('결제 페이지에 도달하면 결제 시도가 기록되고, 결제를 완료하지 않으면 completedAt이 비어있다', async () => {
+    const username = `user1${rand()}`;
+    const agent = request.agent(app);
+    await signup(username);
+    await agent.post('/login').send({ username, password: VALID_PASSWORD });
+
+    await agent.get(`/showtimes/${payShowtimeId}/checkout?seats=B1,B2&adultCount=2&teenCount=0&seniorCount=0&disabledCount=0`);
+
+    const user = await prisma.user.findUnique({ where: { username } });
+    const attempt = await prisma.checkoutAttempt.findFirst({
+      where: { userId: user!.id, showtimeId: payShowtimeId, seats: 'B1,B2' },
+    });
+    expect(attempt).not.toBeNull();
+    expect(attempt!.totalPrice).toBe(32000);
+    expect(attempt!.completedAt).toBeNull();
+  });
+
+  test('결제를 완료하면 해당 결제 시도의 completedAt이 채워진다', async () => {
+    const username = `user1${rand()}`;
+    const agent = request.agent(app);
+    await signup(username);
+    await agent.post('/login').send({ username, password: VALID_PASSWORD });
+
+    await agent.get(`/showtimes/${payShowtimeId}/checkout?seats=A1,A2&adultCount=2&teenCount=0&seniorCount=0&disabledCount=0`);
+    const pay = await agent.post(`/showtimes/${payShowtimeId}/pay`).send({
+      seats: 'A1,A2',
+      adultCount: 2,
+      teenCount: 0,
+      seniorCount: 0,
+      disabledCount: 0,
+      paymentMethod: 'CARD',
+      agreeCancelPolicy: 'on',
+    });
+    expect(pay.status).toBe(302);
+
+    const user = await prisma.user.findUnique({ where: { username } });
+    const attempt = await prisma.checkoutAttempt.findFirst({
+      where: { userId: user!.id, showtimeId: payShowtimeId, seats: 'A1,A2' },
+    });
+    expect(attempt!.completedAt).not.toBeNull();
   });
 });

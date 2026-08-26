@@ -14,8 +14,9 @@ model User {
   phone        String      @unique
   passwordHash String
   createdAt    DateTime    @default(now())
-  bookings     Booking[]
-  movieLikes   MovieLike[]
+  bookings         Booking[]
+  movieLikes       MovieLike[]
+  checkoutAttempts CheckoutAttempt[]
 }
 
 model Movie {
@@ -55,6 +56,7 @@ model Showtime {
   totalSeats  Int
   cols        Int
   bookings    Booking[]
+  checkoutAttempts CheckoutAttempt[]
 
   @@index([movieId, startAt])
 }
@@ -100,4 +102,23 @@ model Booking {
   @@index([showtimeId, seatLabel])
   @@index([reservationNo])
   @@index([userId, cancelledAt])
+}
+
+// 결제 페이지까지 도달한 시도를 기록한다. 결제(POST /pay)가 성공해야만
+// Booking이 생기므로, 이 로그가 없으면 "좌석까지 골랐지만 결제는 안 한 사람"이
+// DB 어디에도 남지 않는다 — 재방문 유도 같은 마케팅에 쓰려면 이 이탈 지점이
+// 필요하다. completedAt이 null이면 결제까지 이어지지 않은 시도다.
+model CheckoutAttempt {
+  id          Int       @id @default(autoincrement())
+  user        User      @relation(fields: [userId], references: [id])
+  userId      Int
+  showtime    Showtime  @relation(fields: [showtimeId], references: [id])
+  showtimeId  Int
+  seats       String
+  totalPrice  Int
+  createdAt   DateTime  @default(now())
+  completedAt DateTime?
+
+  @@index([userId])
+  @@index([showtimeId, completedAt])
 }
