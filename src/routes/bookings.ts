@@ -315,39 +315,6 @@ bookingsRouter.get('/bookings/complete', requireLogin, asyncHandler(async (req, 
   });
 }));
 
-bookingsRouter.post('/showtimes/:id/book', requireLogin, asyncHandler(async (req, res) => {
-  const showtimeId = Number(req.params.id);
-  const { seats, adultCount, teenCount, seniorCount, disabledCount } = req.body;
-
-  const check = await validateOrder(showtimeId, seats, { adultCount, teenCount, seniorCount, disabledCount });
-  if (!check.ok) {
-    return res.status(check.status).json({ error: check.error });
-  }
-  const { seats: seatList, categoryBySeat, totalPrice } = check;
-
-  try {
-    await prisma.$transaction(
-      seatList.map((seatLabel, i) =>
-        prisma.booking.create({
-          data: {
-            showtimeId,
-            seatLabel,
-            userId: req.session.userId!,
-            category: categoryBySeat[i],
-            price: TICKET_PRICES[categoryBySeat[i]],
-          },
-        })
-      )
-    );
-    res.json({ ok: true, totalPrice });
-  } catch (err) {
-    if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
-      return res.status(409).json({ error: '이미 예약된 좌석이 포함되어 있습니다.' });
-    }
-    throw err;
-  }
-}));
-
 // 실제 영화관 마이페이지처럼 여러 섹션을 탭으로 묶은 화면. "내가 본 영화"·
 // "결제내역"(예매내역/취소내역)·"나의 영화일기"는 이미 있는 Booking 데이터
 // 위에 평점/한줄평/일기(MovieReview)만 얹어 실제 기능으로 두고, 1:1문의·
