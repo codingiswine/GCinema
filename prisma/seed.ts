@@ -139,20 +139,6 @@ const movieData = [
     bookingRatePercent: 3.7,
     cumulativeViewers: '12.8만',
   },
-  // 상영관을 4개로만 정리하는 편이 화면이 깔끔해서 호프는 잠시 숨겨둠.
-  // {
-  //   title: '호프',
-  //   genre: '액션',
-  //   runningTimeMin: 166,
-  //   ageRating: '15',
-  //   posterUrl: '/posters/5.jpg',
-  //   theaterName: '5관',
-  //   totalSeats: 60,
-  //   times: ['11:00', '15:30', '20:00'],
-  //   satisfactionPercent: 90,
-  //   bookingRatePercent: 2.5,
-  //   cumulativeViewers: '8.4만',
-  // },
 ];
 
 async function main() {
