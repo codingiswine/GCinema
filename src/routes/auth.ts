@@ -121,7 +121,7 @@ authRouter.post('/signup', asyncHandler(async (req, res) => {
 
   const passwordHash = await bcrypt.hash(password, 10);
   await prisma.user.create({ data: { username, email, phone, passwordHash } });
-  res.redirect('/login');
+  res.redirect('/login?signup=1');
 }));
 
 // 로그인 필요 페이지에서 넘어온 next는 우리 서버 내부 경로일 때만 신뢰한다.
@@ -131,7 +131,7 @@ function safeNext(value: unknown): string | null {
 }
 
 authRouter.get('/login', (req, res) => {
-  res.render('login', { error: null, next: safeNext(req.query.next) });
+  res.render('login', { error: null, next: safeNext(req.query.next), justSignedUp: req.query.signup === '1' });
 });
 
 authRouter.post('/login', asyncHandler(async (req, res) => {
@@ -139,7 +139,7 @@ authRouter.post('/login', asyncHandler(async (req, res) => {
   const user = await prisma.user.findUnique({ where: { username } });
   const ok = user && (await bcrypt.compare(password, user.passwordHash));
   if (!ok || !user) {
-    return res.status(401).render('login', { error: '아이디 또는 비밀번호가 올바르지 않습니다.', next: safeNext(next) });
+    return res.status(401).render('login', { error: '아이디 또는 비밀번호가 올바르지 않습니다.', next: safeNext(next), justSignedUp: false });
   }
 
   req.session.userId = user.id;
