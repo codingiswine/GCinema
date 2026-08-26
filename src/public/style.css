@@ -52,7 +52,10 @@ body {
   background: #fff; border: 1px solid #ddd; border-radius: 4px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.08); white-space: nowrap; z-index: 10;
 }
-.footer-affiliates li { padding: 6px 16px; color: #555; }
+.footer-affiliates li { padding: 0; }
+.footer-affiliates li a { display: block; padding: 6px 16px; color: #555; text-decoration: none; }
+.footer-affiliates li a:hover { background: #f5f5f5; }
+.footer-affiliates-main a { font-weight: 700; color: #222; }
 nav {
   display: flex;
   justify-content: space-between;
