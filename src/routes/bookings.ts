@@ -46,6 +46,10 @@ bookingsRouter.get('/showtimes/:id', requireLogin, asyncHandler(async (req, res)
     include: { movie: true, bookings: true },
   });
   if (!showtime) return res.status(404).send('상영 정보를 찾을 수 없습니다.');
+  // 지난 회차의 좌석 페이지로 직접 들어오면 해당 영화 상영시간표로 되돌린다.
+  if (showtime.startAt.getTime() <= Date.now()) {
+    return res.redirect(`/movies/${showtime.movieId}`);
+  }
 
   const booked = new Set(showtime.bookings.map((b) => b.seatLabel));
   const seats = seatLabels(showtime.totalSeats, showtime.cols).map((label) => ({
@@ -83,6 +87,16 @@ bookingsRouter.post('/showtimes/:id/book', requireLogin, asyncHandler(async (req
   }
   if (seats.length !== totalTickets) {
     return res.status(400).json({ error: '선택한 좌석 수와 관람인원 수가 일치하지 않습니다.' });
+  }
+
+  // 상영시간표에서 지난 회차를 숨기지만, URL로 직접 들어오는 경우까지 막으려면
+  // 예매 시점에 서버에서 한 번 더 확인해야 한다.
+  const showtime = await prisma.showtime.findUnique({ where: { id: showtimeId } });
+  if (!showtime) {
+    return res.status(404).json({ error: '상영 정보를 찾을 수 없습니다.' });
+  }
+  if (showtime.startAt.getTime() <= Date.now()) {
+    return res.status(400).json({ error: '이미 상영이 시작된 회차는 예매할 수 없습니다.' });
   }
 
   const categoryBySeat: TicketCategory[] = [

@@ -35,7 +35,11 @@
     </div>
 
     <% if (showtimes.length === 0) { %>
-      <p>선택한 날짜에는 상영 정보가 없습니다.</p>
+      <% if (selectedKey === dateOptions[0].key) { %>
+        <p>오늘 남은 상영 회차가 없습니다. 다른 날짜를 선택해주세요.</p>
+      <% } else { %>
+        <p>선택한 날짜에는 상영 정보가 없습니다.</p>
+      <% } %>
     <% } else { %>
       <p class="schedule-hall-label"><%= showtimes[0].theaterName %> · 리클라이너+일반 · 총 <%= showtimes[0].totalSeats %>석</p>
       <div class="showtime-list">

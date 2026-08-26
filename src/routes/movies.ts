@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { prisma } from '../db';
+import { requireLogin } from '../middleware/auth';
 import { asyncHandler } from '../middleware/asyncHandler';
 
 export const moviesRouter = Router();
@@ -42,7 +43,26 @@ moviesRouter.get('/movies/:id/detail', asyncHandler(async (req, res) => {
   if (!movie) return res.status(404).send('영화를 찾을 수 없습니다.');
 
   const dateOptions = buildDateOptions();
-  res.render('movieDetail', { movie, dateOptions });
+  const userId = req.session.userId;
+  const liked = userId
+    ? (await prisma.movieLike.findUnique({ where: { userId_movieId: { userId, movieId } } })) !== null
+    : false;
+  res.render('movieDetail', { movie, dateOptions, liked });
+}));
+
+// 좋아요 토글. 이미 눌러둔 상태면 취소되도록 같은 엔드포인트에서 처리한다.
+moviesRouter.post('/movies/:id/like', requireLogin, asyncHandler(async (req, res) => {
+  const movieId = Number(req.params.id);
+  const userId = req.session.userId!;
+  const where = { userId_movieId: { userId, movieId } };
+
+  const existing = await prisma.movieLike.findUnique({ where });
+  if (existing) {
+    await prisma.movieLike.delete({ where });
+    return res.json({ liked: false });
+  }
+  await prisma.movieLike.create({ data: { userId, movieId } });
+  res.json({ liked: true });
 }));
 
 // Unified schedule page: pick a movie from the sidebar and a date from the
@@ -63,8 +83,12 @@ moviesRouter.get('/movies/:id', asyncHandler(async (req, res) => {
   const rangeStart = new Date(sy, sm - 1, sd);
   const rangeEnd = new Date(sy, sm - 1, sd + 1);
 
+  // 오늘 탭에서는 이미 시작한 회차를 빼고 남은 회차만 보여준다.
+  const now = new Date();
+  const from = rangeStart > now ? rangeStart : now;
+
   const showtimes = await prisma.showtime.findMany({
-    where: { movieId, startAt: { gte: rangeStart, lt: rangeEnd } },
+    where: { movieId, startAt: { gte: from, lt: rangeEnd } },
     orderBy: { startAt: 'asc' },
     include: { _count: { select: { bookings: true } } },
   });

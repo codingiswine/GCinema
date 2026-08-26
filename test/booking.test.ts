@@ -10,9 +10,12 @@ const signup = (username: string, email = `${username}@test.com`, phone = randPh
     .post('/signup')
     .send({ username, email, phone, password: VALID_PASSWORD, passwordConfirm: VALID_PASSWORD });
 
+const HOUR = 60 * 60 * 1000;
+
 describe('booking flow', () => {
   let movieId: number;
   let showtimeId: number;
+  let pastShowtimeId: number;
 
   beforeAll(async () => {
     const movie = await prisma.movie.create({
@@ -28,14 +31,19 @@ describe('booking flow', () => {
     });
     movieId = movie.id;
     const showtime = await prisma.showtime.create({
-      data: { movieId, theaterName: '1관', startAt: new Date(), totalSeats: 4, cols: 2 },
+      data: { movieId, theaterName: '1관', startAt: new Date(Date.now() + 24 * HOUR), totalSeats: 4, cols: 2 },
     });
     showtimeId = showtime.id;
+    const pastShowtime = await prisma.showtime.create({
+      data: { movieId, theaterName: '1관', startAt: new Date(Date.now() - 2 * HOUR), totalSeats: 4, cols: 2 },
+    });
+    pastShowtimeId = pastShowtime.id;
   });
 
   afterAll(async () => {
-    await prisma.booking.deleteMany({ where: { showtimeId } });
-    await prisma.showtime.delete({ where: { id: showtimeId } });
+    await prisma.booking.deleteMany({ where: { showtimeId: { in: [showtimeId, pastShowtimeId] } } });
+    await prisma.movieLike.deleteMany({ where: { movieId } });
+    await prisma.showtime.deleteMany({ where: { id: { in: [showtimeId, pastShowtimeId] } } });
     await prisma.movie.delete({ where: { id: movieId } });
     await prisma.$disconnect();
   });
@@ -325,5 +333,47 @@ describe('booking flow', () => {
     const res = await request(app).post(`/bookings/${booking!.id}/cancel`);
     expect(res.status).toBe(302);
     expect(await prisma.booking.findUnique({ where: { id: booking!.id } })).not.toBeNull();
+  });
+
+  test('이미 상영이 시작된 회차는 예매할 수 없다', async () => {
+    const username = `user1${rand()}`;
+    const agent = request.agent(app);
+    await signup(username);
+    await agent.post('/login').send({ username, password: VALID_PASSWORD });
+
+    const res = await agent
+      .post(`/showtimes/${pastShowtimeId}/book`)
+      .send({ seats: ['A1'], adultCount: 1, teenCount: 0, seniorCount: 0, disabledCount: 0 });
+    expect(res.status).toBe(400);
+    expect(await prisma.booking.findFirst({ where: { showtimeId: pastShowtimeId } })).toBeNull();
+  });
+
+  test('상영시간표에는 이미 시작된 회차가 노출되지 않는다', async () => {
+    const res = await request(app).get(`/movies/${movieId}`);
+    expect(res.status).toBe(200);
+    expect(res.text).not.toContain(`/showtimes/${pastShowtimeId}"`);
+  });
+
+  test('좋아요는 저장되고 다시 누르면 취소된다', async () => {
+    const username = `user1${rand()}`;
+    const agent = request.agent(app);
+    await signup(username);
+    await agent.post('/login').send({ username, password: VALID_PASSWORD });
+
+    const liked = await agent.post(`/movies/${movieId}/like`);
+    expect(liked.status).toBe(200);
+    expect(liked.body.liked).toBe(true);
+    expect(await prisma.movieLike.findFirst({ where: { movieId } })).not.toBeNull();
+
+    const unliked = await agent.post(`/movies/${movieId}/like`);
+    expect(unliked.status).toBe(200);
+    expect(unliked.body.liked).toBe(false);
+    expect(await prisma.movieLike.findFirst({ where: { movieId } })).toBeNull();
+  });
+
+  test('로그인하지 않으면 좋아요를 누를 수 없다', async () => {
+    const res = await request(app).post(`/movies/${movieId}/like`);
+    expect(res.status).toBe(302);
+    expect(await prisma.movieLike.findFirst({ where: { movieId } })).toBeNull();
   });
 });
