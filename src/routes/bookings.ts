@@ -348,13 +348,42 @@ bookingsRouter.post('/showtimes/:id/book', requireLogin, asyncHandler(async (req
   }
 }));
 
+// 실제 영화관 마이페이지처럼 여러 섹션을 탭으로 묶은 화면. "내가 본 영화"와
+// "결제내역"(예매내역/취소내역)은 이미 있는 Booking 데이터로 바로 계산할 수
+// 있어 실제 기능으로 두고, 영화일기·1:1문의·정보관리는 이 과제 요구 기능과
+// 무관한 새 영역이라 탭만 두고 "준비 중" 안내만 보여준다.
+const MYPAGE_TABS = ['watched', 'payments', 'diary', 'inquiry', 'profile'] as const;
+type MypageTab = (typeof MYPAGE_TABS)[number];
+
 bookingsRouter.get('/bookings', requireLogin, asyncHandler(async (req, res) => {
-  const bookings = await prisma.booking.findMany({
-    where: { userId: req.session.userId!, cancelledAt: null },
-    include: { showtime: { include: { movie: true } } },
-    orderBy: { bookedAt: 'desc' },
-  });
-  res.render('bookings', { bookings, categoryLabels: CATEGORY_LABELS });
+  const userId = req.session.userId!;
+  const tab: MypageTab = MYPAGE_TABS.includes(req.query.tab as MypageTab)
+    ? (req.query.tab as MypageTab)
+    : 'payments';
+  const sub = req.query.sub === 'cancelled' ? 'cancelled' : 'reserved';
+
+  let bookings: Prisma.BookingGetPayload<{ include: { showtime: { include: { movie: true } } } }>[] = [];
+  if (tab === 'watched') {
+    bookings = await prisma.booking.findMany({
+      where: { userId, cancelledAt: null, showtime: { startAt: { lte: new Date() } } },
+      include: { showtime: { include: { movie: true } } },
+      orderBy: { showtime: { startAt: 'desc' } },
+    });
+  } else if (tab === 'payments' && sub === 'cancelled') {
+    bookings = await prisma.booking.findMany({
+      where: { userId, cancelledAt: { not: null } },
+      include: { showtime: { include: { movie: true } } },
+      orderBy: { cancelledAt: 'desc' },
+    });
+  } else if (tab === 'payments') {
+    bookings = await prisma.booking.findMany({
+      where: { userId, cancelledAt: null },
+      include: { showtime: { include: { movie: true } } },
+      orderBy: { bookedAt: 'desc' },
+    });
+  }
+
+  res.render('bookings', { bookings, categoryLabels: CATEGORY_LABELS, tab, sub });
 }));
 
 bookingsRouter.post('/bookings/:id/cancel', requireLogin, asyncHandler(async (req, res) => {
