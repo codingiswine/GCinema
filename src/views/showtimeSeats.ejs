@@ -225,21 +225,19 @@
   }
 
   // 선택 가능한 좌석 중, 지금 남은 인원수로는 고를 수 없는 좌석에
-  // seat-blocked 표시를 한다: 2명 이상 남았으면 짝이 없는(1인 전용) 좌석이,
-  // 1명만 남았으면 짝이 있는(2인용) 좌석이 선택 불가 대상이다.
+  // seat-blocked 표시를 한다. 2명 이상 남았을 때 짝이 없는(1인 전용) 좌석만
+  // 대상이며, 1명만 남았을 때는 아무 빈 좌석이나 고를 수 있어 막지 않는다.
   function updateBlockedSeats() {
     var remaining = totalTickets() - selectedSeatCount();
     var seatButtons = document.querySelectorAll('.seat:not(.booked)');
     seatButtons.forEach(function (el) { el.classList.remove('seat-blocked'); });
-    if (remaining <= 0) return;
+    if (remaining < 2) return;
 
     var partnerOf = computeSeatPartners();
     seatButtons.forEach(function (el) {
       var label = el.dataset.label;
       if (selectedGroups.some(function (g) { return g.indexOf(label) !== -1; })) return;
-      var hasPartner = !!partnerOf[label];
-      var blocked = remaining >= 2 ? !hasPartner : hasPartner;
-      if (blocked) el.classList.add('seat-blocked');
+      if (!partnerOf[label]) el.classList.add('seat-blocked');
     });
   }
 
@@ -348,15 +346,11 @@
       }
 
       var remaining = total - selectedSeatCount();
-      var partner = computeSeatPartners()[label] || null;
 
       if (remaining === 1) {
-        if (partner) {
-          showError('이 좌석은 두 명이 함께 앉는 자리라 혼자 선택할 수 없습니다. 다른 좌석을 선택해주세요.');
-          return;
-        }
         selectedGroups.push([label]);
       } else {
+        var partner = computeSeatPartners()[label] || null;
         if (!partner) {
           showError('옆자리에 빈 좌석이 없어 짝을 지을 수 없습니다. 다른 좌석을 선택해주세요.');
           return;
