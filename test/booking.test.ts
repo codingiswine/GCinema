@@ -5,10 +5,17 @@ import { prisma } from '../src/db';
 const rand = () => Math.random().toString(36).slice(2, 8);
 const randPhone = () => `010-${1000 + Math.floor(Math.random() * 9000)}-${1000 + Math.floor(Math.random() * 9000)}`;
 const VALID_PASSWORD = 'Password1!';
-const signup = (username: string, email = `${username}@test.com`, phone = randPhone()) =>
-  request(app)
+
+// 테스트가 만든 계정은 afterAll에서 지워야 하므로 여기서 이름을 모아둔다.
+// 실패할 것을 기대하는 회원가입(검증 테스트)도 그대로 담기지만, 그런 계정은
+// 애초에 만들어지지 않아 deleteMany가 조용히 넘어간다.
+const createdUsernames: string[] = [];
+const signup = (username: string, email = `${username}@test.com`, phone = randPhone()) => {
+  createdUsernames.push(username);
+  return request(app)
     .post('/signup')
     .send({ username, email, phone, password: VALID_PASSWORD, passwordConfirm: VALID_PASSWORD });
+};
 
 // 사용자가 좌석을 실제로 확정하는 경로는 결제(POST /pay) 하나뿐이므로, 예매가
 // 필요한 테스트는 모두 이 헬퍼로 결제까지 태운다. 매번 반복되는 결제수단·취소정책
@@ -82,6 +89,8 @@ describe('booking flow', () => {
     await prisma.movieLike.deleteMany({ where: { movieId } });
     await prisma.showtime.deleteMany({ where: { id: { in: showtimeIds } } });
     await prisma.movie.delete({ where: { id: movieId } });
+    // 계정은 위의 예매·좋아요·후기를 다 지운 뒤에야 FK에 걸리지 않고 지워진다.
+    await prisma.user.deleteMany({ where: { username: { in: createdUsernames } } });
     await prisma.$disconnect();
   });
 
