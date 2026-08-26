@@ -44,7 +44,7 @@
       <p class="schedule-hall-label"><%= showtimes[0].theaterName %> · 리클라이너+일반 · 총 <%= showtimes[0].totalSeats %>석</p>
       <div class="showtime-list">
         <% showtimes.forEach(function(st) { %>
-          <a class="showtime-btn" href="/showtimes/<%= st.id %>">
+          <a class="showtime-btn" href="/showtimes/<%= st.id %>" data-start="<%= st.startAt.toISOString() %>">
             <span class="showtime-time"><%= new Date(st.startAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false }) %></span>
             <span class="showtime-seats"><%= st.totalSeats - st._count.bookings %>/<%= st.totalSeats %> · <%= st.theaterName %></span>
           </a>
@@ -68,31 +68,69 @@
   </div>
 </div>
 
+<!-- 상영시간이 20분 미만으로 남은 회차 예매 확인 팝업 -->
+<div id="lastMinuteModal" class="modal-overlay" style="display:none;">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span>알림</span>
+      <button type="button" class="modal-close" data-modal="lastMinuteModal">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p>영화상영시간이 20분 미만으로 남아있어 예매 취소는 현장에서만 가능합니다. 예매하시겠습니까?</p>
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="btn-secondary" data-modal="lastMinuteModal">취소</button>
+      <button type="button" class="modal-confirm" id="lastMinuteConfirmBtn">확인</button>
+    </div>
+  </div>
+</div>
+
 <script>
   var LOGGED_IN = <%- JSON.stringify(!!userId) %>;
+  var LAST_MINUTE_CUTOFF_MS = 20 * 60 * 1000;
   var pendingShowtimeHref = null;
 
-  document.querySelectorAll('.modal-close').forEach(function (btn) {
+  // X 버튼(.modal-close)뿐 아니라 취소 버튼처럼 data-modal만 붙은
+  // 버튼도 같은 방식으로 닫히게 한다.
+  document.querySelectorAll('[data-modal]').forEach(function (btn) {
     btn.addEventListener('click', function () {
       document.getElementById(btn.dataset.modal).style.display = 'none';
     });
   });
+
+  // 로그인 상태면 좌석 페이지로 바로 이동시키고, 아니면 로그인이 필요하다는
+  // 팝업을 먼저 보여준다(확인 시 서버의 requireLogin이 next로 되돌려준다).
+  function proceedToShowtime(href) {
+    if (!LOGGED_IN) {
+      pendingShowtimeHref = href;
+      document.getElementById('loginRequiredModal').style.display = 'flex';
+      return;
+    }
+    window.location.href = href;
+  }
+
   document.getElementById('loginRequiredConfirmBtn').addEventListener('click', function () {
-    // 클릭했던 회차의 좌석 페이지로 이동시키면, 그 경로에 걸린 서버의
-    // requireLogin이 알아서 /login?next=<원래 경로>로 보내주므로
-    // 로그인 후 처음 눌렀던 좌석 선택 화면으로 바로 돌아온다.
     window.location.href = pendingShowtimeHref || '/login';
   });
 
-  if (!LOGGED_IN) {
-    document.querySelectorAll('.showtime-btn').forEach(function (el) {
-      el.addEventListener('click', function (e) {
-        e.preventDefault();
-        pendingShowtimeHref = el.getAttribute('href');
-        document.getElementById('loginRequiredModal').style.display = 'flex';
-      });
+  document.getElementById('lastMinuteConfirmBtn').addEventListener('click', function () {
+    document.getElementById('lastMinuteModal').style.display = 'none';
+    proceedToShowtime(pendingShowtimeHref);
+  });
+
+  document.querySelectorAll('.showtime-btn').forEach(function (el) {
+    el.addEventListener('click', function (e) {
+      e.preventDefault();
+      var href = el.getAttribute('href');
+      var msLeft = new Date(el.dataset.start).getTime() - Date.now();
+      if (msLeft < LAST_MINUTE_CUTOFF_MS) {
+        pendingShowtimeHref = href;
+        document.getElementById('lastMinuteModal').style.display = 'flex';
+        return;
+      }
+      proceedToShowtime(href);
     });
-  }
+  });
 </script>
 
 <%- include('partials/footer') %>

@@ -287,6 +287,8 @@ button:hover { background: #444; }
 .modal-body p { margin: 0 0 12px; }
 .modal-confirm { display: block; margin: 0 auto 18px; background: #0f6e8c; padding: 8px 24px; }
 .modal-confirm:hover { background: #0c5972; }
+.modal-actions { display: flex; justify-content: center; gap: 8px; margin: 0 0 18px; }
+.modal-actions .modal-confirm, .modal-actions .btn-secondary { margin: 0; padding: 8px 24px; }
 
 .checkout-modal-box {
   max-width: 480px; display: flex; flex-direction: column; max-height: 85vh;
@@ -414,8 +416,11 @@ button:hover { background: #444; }
 }
 
 /* 결제 페이지 */
-.checkout-title { margin-bottom: 14px; }
-.checkout-layout { display: flex; gap: 20px; align-items: flex-start; }
+.checkout-title { max-width: 700px; margin: 0 auto 14px; }
+.checkout-layout {
+  display: flex; flex-direction: row; gap: 20px; align-items: flex-start;
+  max-width: 700px; margin: 0 auto;
+}
 .checkout-main { flex: 1; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
 .checkout-side {
   flex: 0 0 260px; position: sticky; top: 16px;
