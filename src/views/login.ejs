@@ -9,6 +9,7 @@
 <form action="/login" method="post">
   <input type="text" name="username" placeholder="아이디" required />
   <input type="password" name="password" placeholder="비밀번호" required />
+  <% if (next) { %><input type="hidden" name="next" value="<%= next %>" /><% } %>
   <button type="submit">로그인</button>
 </form>
 <p>계정이 없으신가요? <a href="/signup">회원가입</a></p>

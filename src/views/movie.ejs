@@ -70,6 +70,7 @@
 
 <script>
   var LOGGED_IN = <%- JSON.stringify(!!userId) %>;
+  var pendingShowtimeHref = null;
 
   document.querySelectorAll('.modal-close').forEach(function (btn) {
     btn.addEventListener('click', function () {
@@ -77,13 +78,17 @@
     });
   });
   document.getElementById('loginRequiredConfirmBtn').addEventListener('click', function () {
-    window.location.href = '/login';
+    // 클릭했던 회차의 좌석 페이지로 이동시키면, 그 경로에 걸린 서버의
+    // requireLogin이 알아서 /login?next=<원래 경로>로 보내주므로
+    // 로그인 후 처음 눌렀던 좌석 선택 화면으로 바로 돌아온다.
+    window.location.href = pendingShowtimeHref || '/login';
   });
 
   if (!LOGGED_IN) {
     document.querySelectorAll('.showtime-btn').forEach(function (el) {
       el.addEventListener('click', function (e) {
         e.preventDefault();
+        pendingShowtimeHref = el.getAttribute('href');
         document.getElementById('loginRequiredModal').style.display = 'flex';
       });
     });

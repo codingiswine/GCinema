@@ -124,20 +124,26 @@ authRouter.post('/signup', asyncHandler(async (req, res) => {
   res.redirect('/login');
 }));
 
-authRouter.get('/login', (_req, res) => {
-  res.render('login', { error: null });
+// 로그인 필요 페이지에서 넘어온 next는 우리 서버 내부 경로일 때만 신뢰한다.
+// (예: "//evil.com"이나 "https://evil.com" 같은 오픈 리다이렉트 방지)
+function safeNext(value: unknown): string | null {
+  return typeof value === 'string' && value.startsWith('/') && !value.startsWith('//') ? value : null;
+}
+
+authRouter.get('/login', (req, res) => {
+  res.render('login', { error: null, next: safeNext(req.query.next) });
 });
 
 authRouter.post('/login', asyncHandler(async (req, res) => {
-  const { username, password } = req.body;
+  const { username, password, next } = req.body;
   const user = await prisma.user.findUnique({ where: { username } });
   const ok = user && (await bcrypt.compare(password, user.passwordHash));
   if (!ok || !user) {
-    return res.status(401).render('login', { error: '아이디 또는 비밀번호가 올바르지 않습니다.' });
+    return res.status(401).render('login', { error: '아이디 또는 비밀번호가 올바르지 않습니다.', next: safeNext(next) });
   }
 
   req.session.userId = user.id;
-  res.redirect('/movies');
+  res.redirect(safeNext(next) || '/movies');
 }));
 
 authRouter.post('/logout', (req, res) => {

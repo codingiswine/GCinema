@@ -8,7 +8,7 @@ declare module 'express-session' {
 
 export function requireLogin(req: Request, res: Response, next: NextFunction) {
   if (!req.session.userId) {
-    return res.redirect('/login');
+    return res.redirect('/login?next=' + encodeURIComponent(req.originalUrl));
   }
   next();
 }

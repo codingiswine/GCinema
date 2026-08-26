@@ -195,6 +195,32 @@ describe('booking flow', () => {
     expect(res.headers['set-cookie']).toBeDefined();
   });
 
+  test('비로그인 상태로 좌석 페이지 접근 시 로그인 후 원래 페이지로 돌아간다', async () => {
+    const agent = request.agent(app);
+    const guarded = await agent.get(`/showtimes/${showtimeId}`);
+    expect(guarded.status).toBe(302);
+    expect(guarded.headers.location).toBe(`/login?next=%2Fshowtimes%2F${showtimeId}`);
+
+    const username = `user1${rand()}`;
+    await signup(username);
+    const loginRes = await agent
+      .post('/login')
+      .send({ username, password: VALID_PASSWORD, next: `/showtimes/${showtimeId}` });
+    expect(loginRes.status).toBe(302);
+    expect(loginRes.headers.location).toBe(`/showtimes/${showtimeId}`);
+  });
+
+  test('next 값이 외부 주소면 무시하고 영화 목록으로 이동한다', async () => {
+    const username = `user1${rand()}`;
+    const agent = request.agent(app);
+    await signup(username);
+    const res = await agent
+      .post('/login')
+      .send({ username, password: VALID_PASSWORD, next: 'https://evil.example.com' });
+    expect(res.status).toBe(302);
+    expect(res.headers.location).toBe('/movies');
+  });
+
   test('로그인한 사용자는 좌석을 예매할 수 있다', async () => {
     const username = `user1${rand()}`;
     const agent = request.agent(app);
