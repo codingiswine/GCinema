@@ -1,8 +1,8 @@
 {
-  "name": "gcmediai-ticket-booking",
+  "name": "gcinema-ticket-booking",
   "version": "1.0.0",
   "private": true,
-  "description": "GCmediai 과제 - 영화 티켓 예매 시스템",
+  "description": "GCinema - 영화 티켓 예매 시스템",
   "main": "src/app.ts",
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/app.ts",
