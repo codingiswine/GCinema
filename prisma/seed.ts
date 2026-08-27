@@ -51,15 +51,17 @@ function pickRandomSeats(totalSeats: number, cols: number, ratio: number): strin
   return all.slice(0, count);
 }
 
-// 박스오피스 1~2위인 오디세이/스파이더맨은 같은 시간표(오디세이 심야 포함)를 쓴다.
-// 실제 영화관은 러닝타임을 그대로 쓰지 않고 5분 단위로 올림해서 상영시간표를
-// 짠다 — 정시가 아닌 hh:22, hh:58 같은 시각은 실제 상영관 시간표에 없다.
-// 러닝타임(172/145/111/99분)을 5분 단위로 올림한 간격(175/145/115/100분)을
-// 쓰고, 12세 관람가(스파이더맨·오크 스트리트)는 9시대로 앞당기고 15세 관람가
-// (오디세이·경주기행)는 그보다 늦게 시작해 네 영화 18개 회차 시작 시각이
-// 하나도 겹치지 않도록 짰다(직접 계산해 확인함).
-const ODYSSEY_TIMES = ['10:30', '13:25', '16:20', '19:15', '22:10']; // 172분→175분 간격
-const SPIDERMAN_TIMES = ['09:00', '11:25', '13:50', '16:15', '18:40']; // 145분 간격(이미 5분 단위)
+// 박스오피스 1~2위(오디세이/스파이더맨)는 상영관을 2개씩 써서(GC타워 9층
+// 1·2관, 10층 3·4관) 청소·환기 버퍼를 제대로 두면서도 회차를 넉넉히 연다.
+// 관 간격은 "러닝타임 + 20분 버퍼"를 5분 단위로 올린 값이다(러닝타임에 딱
+// 붙이면 상영 종료 직후 다음 회차가 시작하는 꼴이 되어 실제로는 불가능하다).
+// 같은 영화 안에서는 두 관을 절반 간격만큼 어긋나게 배치해 회차 수를 늘리고,
+// 네 영화 전체(24개 회차)의 시작 시각이 서로 겹치지 않도록 오프셋을
+// 직접 탐색해서 확정했다.
+const ODYSSEY_HALL1_TIMES = ['10:00', '13:15', '16:30', '19:45', '23:00']; // 9층 1관, 195분 간격
+const ODYSSEY_HALL2_TIMES = ['11:20', '14:35', '17:50', '21:05']; // 9층 2관, 195분 간격(80분 오프셋)
+const SPIDERMAN_HALL1_TIMES = ['09:00', '11:45', '14:30', '17:15', '20:00', '22:45']; // 10층 3관, 165분 간격
+const SPIDERMAN_HALL2_TIMES = ['10:10', '12:55', '15:40', '18:25', '21:10']; // 10층 4관, 165분 간격(70분 오프셋)
 
 // Real GCinema-style capacities per movie. 67 isn't a clean multiple of
 // COLS, so that hall's last row ends up partially filled (see seatLabels
@@ -81,9 +83,11 @@ const movieData = [
 아들 '텔레마코스'(톰 홀랜드)에게 돌아가기 위한 여정에 나선다.
 그러나 신들의 분노를 산 그의 귀환 앞에는 거대한 폭풍과 괴물들,
 그리고 거스를 수 없는 운명의 시련이 기다리고 있는데…`,
-    theaterName: '1관',
     totalSeats: 84,
-    times: ODYSSEY_TIMES,
+    halls: [
+      { theaterName: '9층 · 1관', times: ODYSSEY_HALL1_TIMES },
+      { theaterName: '9층 · 2관', times: ODYSSEY_HALL2_TIMES },
+    ],
     satisfactionPercent: 98,
     bookingRatePercent: 72.1,
     cumulativeViewers: '746만',
@@ -108,9 +112,11 @@ const movieData = [
 모두가 '피터'를 노리는 적이 될 수 있는 혼란 속에서
 '피터'는 다시 위협에 빠진 'MJ'와 모두를 지키기 위해
 '스파이더맨'으로 그들 앞에 서게 되는데...`,
-    theaterName: '2관',
     totalSeats: 84,
-    times: SPIDERMAN_TIMES,
+    halls: [
+      { theaterName: '10층 · 3관', times: SPIDERMAN_HALL1_TIMES },
+      { theaterName: '10층 · 4관', times: SPIDERMAN_HALL2_TIMES },
+    ],
     satisfactionPercent: 97,
     bookingRatePercent: 9.3,
     cumulativeViewers: '821.5만',
@@ -128,9 +134,9 @@ const movieData = [
 
 얼핏 단란하고 화목한 가족여행처럼 보이지만,
 봉고차 트렁크에는 낯선 한 남자가 실려 있는데…`,
-    theaterName: '3관',
     totalSeats: 42,
-    times: ['11:15', '13:10', '15:05', '17:00'], // 111분→115분 간격, 15세라 오후 시작
+    // 러닝타임(111분)+버퍼 20분을 5분 단위로 올린 135분 간격. 15세라 오후 시작.
+    halls: [{ theaterName: '11층 · 5관', times: ['11:15', '13:30', '15:45', '18:00'] }],
     satisfactionPercent: 95,
     bookingRatePercent: 3.7,
     cumulativeViewers: '5,486',
@@ -155,9 +161,9 @@ const movieData = [
 육지와 하늘, 물속까지 점령한 거대 포식자들의 무차별 공격이 시작된다!
 
 과연 '플랫' 가족은 무사히 살아남아 원래의 일상으로 돌아갈 수 있을까?`,
-    theaterName: '4관',
     totalSeats: 67,
-    times: ['09:20', '11:00', '12:40', '14:20'], // 99분→100분 간격, 12세라 9시대 시작
+    // 러닝타임(99분)+버퍼 20분을 5분 단위로 올린 120분 간격. 12세라 9시대 시작.
+    halls: [{ theaterName: '11층 · 6관', times: ['09:05', '11:05', '13:05', '15:05'] }],
     satisfactionPercent: 92,
     bookingRatePercent: 3.2,
     cumulativeViewers: '1,850',
@@ -209,18 +215,20 @@ async function main() {
 
     const showtimeData = [];
     for (let dayOffset = 0; dayOffset < DAYS_AHEAD; dayOffset++) {
-      for (const time of m.times) {
-        const [hour, minute] = time.split(':').map(Number);
-        const startAt = new Date(today);
-        startAt.setDate(startAt.getDate() + dayOffset);
-        startAt.setHours(hour, minute, 0, 0);
-        showtimeData.push({
-          movieId: movie.id,
-          theaterName: m.theaterName,
-          startAt,
-          totalSeats: m.totalSeats,
-          cols: COLS,
-        });
+      for (const hall of m.halls) {
+        for (const time of hall.times) {
+          const [hour, minute] = time.split(':').map(Number);
+          const startAt = new Date(today);
+          startAt.setDate(startAt.getDate() + dayOffset);
+          startAt.setHours(hour, minute, 0, 0);
+          showtimeData.push({
+            movieId: movie.id,
+            theaterName: hall.theaterName,
+            startAt,
+            totalSeats: m.totalSeats,
+            cols: COLS,
+          });
+        }
       }
     }
     await prisma.showtime.createMany({ data: showtimeData });
