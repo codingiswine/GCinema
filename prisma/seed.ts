@@ -28,8 +28,21 @@ function seatLabels(totalSeats: number, cols: number): string[] {
   return labels;
 }
 
+// Mirrors priorityDisabledSeats() in src/routes/bookings.ts — 앞줄 가운데 두 자리는
+// 우대(장애인) 전용석이다.
+function priorityDisabledSeats(cols: number): Set<string> {
+  if (cols < 4) return new Set();
+  const mid = Math.floor(cols / 2);
+  return new Set([`A${mid}`, `A${mid + 1}`]);
+}
+
 function pickRandomSeats(totalSeats: number, cols: number, ratio: number): string[] {
-  const all = seatLabels(totalSeats, cols);
+  // 우대 전용석은 미리 채우지 않는다. 시드가 채우는 좌석은 모두 일반(ADULT)
+  // 예매인데 앱은 이 자리에 일반 예매가 들어오는 것을 막고 있어, 그대로 두면
+  // 시드가 자기 규칙을 어긴 데이터를 만들게 된다. 덤으로 이 자리가 항상 비어
+  // 있어 우대석 동작을 언제든 확인할 수 있다.
+  const priority = priorityDisabledSeats(cols);
+  const all = seatLabels(totalSeats, cols).filter((label) => !priority.has(label));
   const count = Math.round(all.length * ratio);
   for (let i = all.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));

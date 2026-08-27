@@ -180,6 +180,15 @@
   var selectedGroups = []; // array of arrays of seat labels (pairs or a single leftover seat)
   var errorEl = document.getElementById('bookError');
 
+  // "A10"처럼 열 번호가 두 자리인 좌석이 있어 문자열 정렬로는 A10 < A9 가 되므로,
+  // 행 문자와 열 숫자를 따로 비교한다.
+  function sortSeatLabels(labels) {
+    return labels.slice().sort(function (a, b) {
+      if (a[0] !== b[0]) return a[0] < b[0] ? -1 : 1;
+      return Number(a.slice(1)) - Number(b.slice(1));
+    });
+  }
+
   function totalTickets() {
     return counts.ADULT + counts.TEEN + counts.SENIOR + counts.DISABLED;
   }
@@ -283,7 +292,10 @@
     if (selectedLabels.length === 0) {
       chipsEl.innerHTML = '<span class="seat-sidebar-empty">좌석을 선택해주세요</span>';
     } else {
-      chipsEl.innerHTML = selectedLabels
+      // 보여줄 때만 좌석 순서로 정렬한다. 서버로 보내는 selectedLabels 순서는
+      // 관람인원(성인→청소년→경로→우대)이 좌석에 배정되는 순서와 1:1로 맞물려
+      // 있어서, 그대로 정렬하면 우대 전용석에 성인이 배정돼 예매가 거부된다.
+      chipsEl.innerHTML = sortSeatLabels(selectedLabels)
         .map(function (label) { return '<span class="seat-sidebar-chip">' + label + '</span>'; })
         .join('');
     }

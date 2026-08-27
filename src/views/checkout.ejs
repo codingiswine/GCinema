@@ -27,7 +27,7 @@
           </p>
           <p class="pay-movie-meta"><%= showtime.theaterName %></p>
           <p class="pay-movie-meta"><%= new Date(showtime.startAt).toLocaleString('ko-KR') %></p>
-          <p class="pay-movie-meta">좌석 <strong><%= seats.join(', ') %></strong></p>
+          <p class="pay-movie-meta">좌석 <strong><%= seatsForDisplay.join(', ') %></strong></p>
         </div>
       </div>
     </section>
@@ -83,7 +83,7 @@
   <aside class="checkout-side">
     <p class="pay-side-label">최종 결제금액</p>
     <p class="pay-side-total"><%= totalPrice.toLocaleString() %>원</p>
-    <p class="pay-side-seats"><%= showtime.movie.title %> · <%= seats.join(', ') %></p>
+    <p class="pay-side-seats"><%= showtime.movie.title %> · <%= seatsForDisplay.join(', ') %></p>
     <button type="submit" id="payBtn" class="btn-checkout" disabled><%= totalPrice.toLocaleString() %>원 결제하기</button>
     <p id="payHint" class="pay-side-hint">취소/환불 정책에 동의해야 결제할 수 있습니다.</p>
     <a class="pay-side-back" href="/showtimes/<%= showtime.id %>">좌석 다시 선택</a>

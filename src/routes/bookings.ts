@@ -63,6 +63,14 @@ function seatLabels(totalSeats: number, cols: number): string[] {
 // 모든 상영관의 맨 앞줄(A) 가운데 두 자리는 우대(장애인) 전용석으로 지정한다.
 // 한 줄이 너무 좁으면(예: 2열) "가운데 두 자리"가 앞줄 전체가 되어버려 의미가
 // 없으므로, 실제 상영관 규모(4열 이상)에서만 적용한다.
+// "A10"처럼 열 번호가 두 자리인 좌석이 있어 문자열 정렬로는 A10이 A9보다 앞서므로,
+// 행 문자와 열 숫자를 나눠 비교한다. 화면 표시용으로만 쓴다.
+function sortSeatLabels(labels: string[]): string[] {
+  return [...labels].sort((a, b) =>
+    a[0] !== b[0] ? (a[0] < b[0] ? -1 : 1) : Number(a.slice(1)) - Number(b.slice(1))
+  );
+}
+
 function priorityDisabledSeats(cols: number): Set<string> {
   if (cols < 4) return new Set();
   const mid = Math.floor(cols / 2);
@@ -216,6 +224,9 @@ bookingsRouter.get('/showtimes/:id/checkout', requireLogin, asyncHandler(async (
   res.render('checkout', {
     showtime,
     seats,
+    // 화면에는 좌석 순서대로 보여준다. seats 자체는 관람인원이 좌석에 배정되는
+    // 순서(성인→청소년→경로→우대)와 맞물려 있어 정렬하면 안 되므로 따로 넘긴다.
+    seatsForDisplay: sortSeatLabels(seats),
     counts,
     lines,
     totalPrice,

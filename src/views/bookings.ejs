@@ -57,6 +57,9 @@
         <% } %>
       </div>
       <p><%= b.showtime.theaterName %> · <%= new Date(b.showtime.startAt).toLocaleString('ko-KR') %> · 좌석 <%= b.seatLabel %> · <%= categoryLabels[b.category] %> <%= b.price.toLocaleString() %>원</p>
+      <% if (b.reservationNo) { %>
+        <p class="booking-reservation-no">예매번호 <%= b.reservationNo %></p>
+      <% } %>
       <% if (tab === 'watched') { %>
         <% var review = reviewByMovie[b.showtime.movieId]; %>
         <form class="review-form" data-movie-id="<%= b.showtime.movieId %>">
