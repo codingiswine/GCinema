@@ -18,8 +18,12 @@ const EMAIL_PRESET_DOMAINS = ['naver.com', 'gmail.com', 'daum.net', 'hanmail.net
 // 프로세스 메모리에만 쌓으므로 서버를 재시작하면 초기화되고, 여러 대로 늘리면
 // 서버마다 따로 센다. 실제 서비스라면 Redis처럼 공유 저장소에 둬야 하지만,
 // 이 과제 범위에서는 외부 의존성을 늘리지 않는 쪽을 택했다.
-const MAX_LOGIN_FAILURES = 5;
-const LOGIN_LOCK_MS = 60_000;
+// 실공격(자동화된 대입)에는 여전히 유의미한 제동이면서, 사람이 화면을 확인하려고
+// 몇 번 틀려보는 정도로는 걸리지 않을 균형점을 잡았다. 임계값이 낮고 잠금이
+// 길면(예: 5회/60초) "에러 메시지가 어떻게 뜨는지 보려고 몇 번 틀려본" 사용자가
+// 정작 자기 계정으로 못 들어가는 상황이 실제로 생긴다.
+export const MAX_LOGIN_FAILURES = 8;
+const LOGIN_LOCK_MS = 15_000;
 const LOGIN_ATTEMPT_LIMIT = 10_000; // 메모리가 무한정 늘지 않도록 하는 상한
 
 type LoginAttempt = { failures: number; lockedUntil: number };

@@ -1,6 +1,7 @@
 import request from 'supertest';
 import { app } from '../src/app';
 import { prisma } from '../src/db';
+import { MAX_LOGIN_FAILURES } from '../src/routes/auth';
 
 const rand = () => Math.random().toString(36).slice(2, 8);
 const randPhone = () => `010-${1000 + Math.floor(Math.random() * 9000)}-${1000 + Math.floor(Math.random() * 9000)}`;
@@ -276,7 +277,7 @@ describe('booking flow', () => {
     await signup(username);
 
     // 연속 실패를 임계치까지 쌓는다.
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < MAX_LOGIN_FAILURES; i++) {
       const res = await request(app).post('/login').send({ username, password: 'WrongPass1!' });
       expect(res.status).toBe(401);
     }
@@ -293,6 +294,9 @@ describe('booking flow', () => {
     const username = `user1${rand()}`;
     await signup(username);
 
+    // 두 번의 3회 실패(총 6회)가 임계치(MAX_LOGIN_FAILURES)를 넘지 않아야
+    // 이 테스트가 "초기화됐는지"만 검증하지, 잠금 자체를 검증하지 않는다.
+    expect(3).toBeLessThan(MAX_LOGIN_FAILURES);
     for (let i = 0; i < 3; i++) {
       await request(app).post('/login').send({ username, password: 'WrongPass1!' });
     }
