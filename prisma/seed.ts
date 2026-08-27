@@ -28,6 +28,15 @@ function seatLabels(totalSeats: number, cols: number): string[] {
   return labels;
 }
 
+// Mirrors ticketPricesFor() in src/routes/bookings.ts — kept as a small local
+// copy for the same reason as seatLabels() above.
+function ticketPricesFor(startAt: Date): Record<TicketCategory, number> {
+  const hour = startAt.getHours();
+  if (hour < 10) return { ADULT: 11000, TEEN: 8000, SENIOR: 7000, DISABLED: 5000 };
+  if (hour >= 23) return { ADULT: 9000, TEEN: 9000, SENIOR: 7000, DISABLED: 5000 };
+  return { ADULT: 15000, TEEN: 12000, SENIOR: 7000, DISABLED: 5000 };
+}
+
 // Mirrors priorityDisabledSeats() in src/routes/bookings.ts — 앞줄 가운데 두 자리는
 // 우대(장애인) 전용석이다.
 function priorityDisabledSeats(cols: number): Set<string> {
@@ -237,7 +246,7 @@ async function main() {
     const bookingData: { showtimeId: number; seatLabel: string; userId: number; category: TicketCategory; price: number }[] = [];
     for (const st of createdShowtimes) {
       pickRandomSeats(st.totalSeats, st.cols, OCCUPANCY_RATIO).forEach((seatLabel) => {
-        bookingData.push({ showtimeId: st.id, seatLabel, userId: seedUser.id, category: 'ADULT', price: 16000 });
+        bookingData.push({ showtimeId: st.id, seatLabel, userId: seedUser.id, category: 'ADULT', price: ticketPricesFor(st.startAt).ADULT });
       });
     }
     if (bookingData.length > 0) {
@@ -289,7 +298,7 @@ async function main() {
         seatLabel: 'G7',
         userId: demoUser.id,
         category: 'ADULT',
-        price: 16000,
+        price: ticketPricesFor(startAt).ADULT,
         reservationNo: `G-DEMO-${st.id}`,
         paymentMethod: 'CARD',
       },

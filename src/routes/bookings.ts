@@ -27,12 +27,21 @@ function makeReservationNo(): string {
   return `G${ymd}-${suffix}`;
 }
 
-export const TICKET_PRICES: Record<TicketCategory, number> = {
-  ADULT: 16000,
-  TEEN: 14000,
-  SENIOR: 9000,
-  DISABLED: 8000,
-};
+// 상영 시각에 따라 세 시간대(조조/일반/심야)로 요금이 갈린다. 경로·우대는
+// 시간대와 무관하게 고정 요금이라 세 밴드에서 값이 같다.
+const TICKET_PRICES_BY_BAND = {
+  MORNING: { ADULT: 11000, TEEN: 8000, SENIOR: 7000, DISABLED: 5000 },
+  REGULAR: { ADULT: 15000, TEEN: 12000, SENIOR: 7000, DISABLED: 5000 },
+  LATE_NIGHT: { ADULT: 9000, TEEN: 9000, SENIOR: 7000, DISABLED: 5000 },
+} satisfies Record<string, Record<TicketCategory, number>>;
+
+// 조조는 10시 이전 시작, 심야는 23시 이후(23시 정각 포함) 시작 회차에 적용된다.
+export function ticketPricesFor(startAt: Date): Record<TicketCategory, number> {
+  const hour = startAt.getHours();
+  if (hour < 10) return TICKET_PRICES_BY_BAND.MORNING;
+  if (hour >= 23) return TICKET_PRICES_BY_BAND.LATE_NIGHT;
+  return TICKET_PRICES_BY_BAND.REGULAR;
+}
 
 export const CATEGORY_LABELS: Record<TicketCategory, string> = {
   ADULT: '성인',
@@ -101,7 +110,7 @@ bookingsRouter.get('/showtimes/:id', requireLogin, asyncHandler(async (req, res)
     showtime,
     seats,
     rows,
-    prices: TICKET_PRICES,
+    prices: ticketPricesFor(showtime.startAt),
     breadcrumb: [
       { label: '영화 목록', href: '/movies' },
       { label: '예매', href: `/movies/${showtime.movieId}` },
@@ -118,6 +127,7 @@ type OrderCheck =
       seats: string[];
       counts: Record<TicketCategory, number>;
       categoryBySeat: TicketCategory[];
+      prices: Record<TicketCategory, number>;
       totalPrice: number;
     };
 
@@ -177,7 +187,8 @@ async function validateOrder(
     ...Array(counts.SENIOR).fill('SENIOR' as TicketCategory),
     ...Array(counts.DISABLED).fill('DISABLED' as TicketCategory),
   ];
-  const totalPrice = categoryBySeat.reduce((sum, c) => sum + TICKET_PRICES[c], 0);
+  const prices = ticketPricesFor(showtime.startAt);
+  const totalPrice = categoryBySeat.reduce((sum, c) => sum + prices[c], 0);
 
   const priority = priorityDisabledSeats(showtime.cols);
   const priorityViolation = seats.find((label, i) => priority.has(label) && categoryBySeat[i] !== 'DISABLED');
@@ -185,7 +196,7 @@ async function validateOrder(
     return { ok: false, status: 400, error: `${priorityViolation}은(는) 우대(장애인) 전용 좌석입니다.` };
   }
 
-  return { ok: true, showtime, seats, counts, categoryBySeat, totalPrice };
+  return { ok: true, showtime, seats, counts, categoryBySeat, prices, totalPrice };
 }
 
 // 결제 페이지: 좌석 선택 화면에서 넘어온 좌석/인원을 서버가 다시 검증해서
@@ -203,14 +214,14 @@ bookingsRouter.get('/showtimes/:id/checkout', requireLogin, asyncHandler(async (
     return res.status(check.status).send(check.error);
   }
 
-  const { showtime, seats, counts, totalPrice } = check;
+  const { showtime, seats, counts, prices, totalPrice } = check;
   const lines = (Object.keys(counts) as TicketCategory[])
     .filter((c) => counts[c] > 0)
     .map((c) => ({
       label: CATEGORY_LABELS[c],
       count: counts[c],
-      unitPrice: TICKET_PRICES[c],
-      amount: counts[c] * TICKET_PRICES[c],
+      unitPrice: prices[c],
+      amount: counts[c] * prices[c],
     }));
 
   // 결제(POST /pay)가 성공해야만 Booking이 생기므로, 이 기록이 없으면
@@ -266,7 +277,7 @@ bookingsRouter.post('/showtimes/:id/pay', requireLogin, asyncHandler(async (req,
     return res.status(400).send('결제수단을 선택해주세요.');
   }
 
-  const { seats: seatList, categoryBySeat } = check;
+  const { seats: seatList, categoryBySeat, prices } = check;
   const reservationNo = makeReservationNo();
 
   try {
@@ -278,7 +289,7 @@ bookingsRouter.post('/showtimes/:id/pay', requireLogin, asyncHandler(async (req,
             seatLabel,
             userId: req.session.userId!,
             category: categoryBySeat[i],
-            price: TICKET_PRICES[categoryBySeat[i]],
+            price: prices[categoryBySeat[i]],
             reservationNo,
             paymentMethod: paymentMethod as PaymentMethod,
           },

@@ -394,6 +394,7 @@ button:hover { background: #444; }
 .showtime-btn:hover { border-color: #0f6e8c; }
 .showtime-time { font-weight: 700; font-size: 1.05rem; }
 .showtime-seats { font-size: 0.78rem; color: #888; }
+.showtime-band-icon { margin: 0 2px; font-size: 0.85rem; }
 
 .detail-topbar {
   display: flex; justify-content: space-between; align-items: center;

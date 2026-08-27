@@ -45,6 +45,19 @@ function sessionIdOf(res: request.Response): string | undefined {
 
 const HOUR = 60 * 60 * 1000;
 
+// 가격은 상영 시각의 시간대(조조/일반/심야)에 따라 달라지므로, "일반" 요금을
+// 검증하는 픽스처는 테스트를 실행하는 시각과 무관하게 항상 일반 시간대(10~22시)에
+// 걸리도록 시각을 고정한다. Date.now() + 24h만 쓰면 테스트 실행 시각의 시(hour)를
+// 그대로 물려받아, 새벽/밤에 돌리면 조조·심야 요금으로 튀어버린다.
+const atHour = (daysFromNow: number, hour: number) => {
+  const d = new Date(Date.now() + daysFromNow * 24 * HOUR);
+  d.setHours(hour, 0, 0, 0);
+  return d;
+};
+const regularBandTime = () => atHour(1, 14);
+const morningBandTime = () => atHour(1, 9);
+const lateNightBandTime = () => atHour(1, 23);
+
 describe('booking flow', () => {
   let movieId: number;
   let showtimeId: number;
@@ -52,6 +65,8 @@ describe('booking flow', () => {
   let cancelShowtimeId: number;
   let payShowtimeId: number;
   let priorityShowtimeId: number;
+  let morningShowtimeId: number;
+  let lateNightShowtimeId: number;
 
   beforeAll(async () => {
     const movie = await prisma.movie.create({
@@ -67,7 +82,7 @@ describe('booking flow', () => {
     });
     movieId = movie.id;
     const showtime = await prisma.showtime.create({
-      data: { movieId, theaterName: '1관', startAt: new Date(Date.now() + 24 * HOUR), totalSeats: 4, cols: 2 },
+      data: { movieId, theaterName: '1관', startAt: regularBandTime(), totalSeats: 4, cols: 2 },
     });
     showtimeId = showtime.id;
     const pastShowtime = await prisma.showtime.create({
@@ -77,25 +92,42 @@ describe('booking flow', () => {
     // 취소 테스트는 예매/중복예매 테스트가 이미 채워둔 좌석과 겹치지 않도록
     // 좌석이 넉넉한(A1~D2) 전용 회차를 따로 쓴다.
     const cancelShowtime = await prisma.showtime.create({
-      data: { movieId, theaterName: '1관', startAt: new Date(Date.now() + 24 * HOUR), totalSeats: 8, cols: 2 },
+      data: { movieId, theaterName: '1관', startAt: regularBandTime(), totalSeats: 8, cols: 2 },
     });
     cancelShowtimeId = cancelShowtime.id;
     // 결제 테스트도 다른 테스트가 잡아둔 좌석과 겹치지 않도록 전용 회차를 쓴다.
     const payShowtime = await prisma.showtime.create({
-      data: { movieId, theaterName: '1관', startAt: new Date(Date.now() + 24 * HOUR), totalSeats: 8, cols: 2 },
+      data: { movieId, theaterName: '1관', startAt: regularBandTime(), totalSeats: 8, cols: 2 },
     });
     payShowtimeId = payShowtime.id;
     // 앞줄 가운데 우대 전용석 테스트는 한 줄에 4석 이상 있어야 "가운데 두 자리"가
     // 의미 있으므로(cols=2인 다른 픽스처는 앞줄 전체가 가운데가 되어버림) 별도
     // 회차를 쓴다. cols=4 → 우대 전용석은 A2, A3.
     const priorityShowtime = await prisma.showtime.create({
-      data: { movieId, theaterName: '1관', startAt: new Date(Date.now() + 24 * HOUR), totalSeats: 8, cols: 4 },
+      data: { movieId, theaterName: '1관', startAt: regularBandTime(), totalSeats: 8, cols: 4 },
     });
     priorityShowtimeId = priorityShowtime.id;
+    // 조조(10시 이전)/심야(23시 이후) 요금 검증 전용 회차.
+    const morningShowtime = await prisma.showtime.create({
+      data: { movieId, theaterName: '1관', startAt: morningBandTime(), totalSeats: 4, cols: 2 },
+    });
+    morningShowtimeId = morningShowtime.id;
+    const lateNightShowtime = await prisma.showtime.create({
+      data: { movieId, theaterName: '1관', startAt: lateNightBandTime(), totalSeats: 4, cols: 2 },
+    });
+    lateNightShowtimeId = lateNightShowtime.id;
   });
 
   afterAll(async () => {
-    const showtimeIds = [showtimeId, pastShowtimeId, cancelShowtimeId, payShowtimeId, priorityShowtimeId];
+    const showtimeIds = [
+      showtimeId,
+      pastShowtimeId,
+      cancelShowtimeId,
+      payShowtimeId,
+      priorityShowtimeId,
+      morningShowtimeId,
+      lateNightShowtimeId,
+    ];
     await prisma.movieReview.deleteMany({ where: { movieId } });
     await prisma.checkoutAttempt.deleteMany({ where: { showtimeId: { in: showtimeIds } } });
     await prisma.booking.deleteMany({ where: { showtimeId: { in: showtimeIds } } });
@@ -373,7 +405,7 @@ describe('booking flow', () => {
     const booking = await prisma.booking.findFirst({ where: { showtimeId, seatLabel: 'A1' } });
     expect(booking).not.toBeNull();
     expect(booking!.category).toBe('ADULT');
-    expect(booking!.price).toBe(16000);
+    expect(booking!.price).toBe(15000);
   });
 
   test('여러 카테고리를 섞어 예매하면 좌석별 카테고리/가격이 저장되고 총액이 계산된다', async () => {
@@ -393,14 +425,77 @@ describe('booking flow', () => {
 
     // 총액은 응답이 아니라 사용자가 실제로 보는 완료 화면에서 확인한다.
     const complete = await agent.get(res.headers.location);
-    expect(complete.text).toContain('30,000');
+    expect(complete.text).toContain('27,000');
 
     const b1 = await prisma.booking.findFirst({ where: { showtimeId, seatLabel: 'B1' } });
     const b2 = await prisma.booking.findFirst({ where: { showtimeId, seatLabel: 'B2' } });
     expect(b1!.category).toBe('ADULT');
-    expect(b1!.price).toBe(16000);
+    expect(b1!.price).toBe(15000);
     expect(b2!.category).toBe('TEEN');
-    expect(b2!.price).toBe(14000);
+    expect(b2!.price).toBe(12000);
+  });
+
+  test('조조(10시 이전) 회차는 조조 요금이 적용된다', async () => {
+    const username = `user1${rand()}`;
+    const agent = request.agent(app);
+    await signup(username);
+    await agent.post('/login').send({ username, password: VALID_PASSWORD });
+
+    const res = await book(agent, morningShowtimeId, {
+      seats: ['A1', 'A2'],
+      adultCount: 1,
+      teenCount: 1,
+      seniorCount: 0,
+      disabledCount: 0,
+    });
+    expect(res.status).toBe(302);
+
+    const b1 = await prisma.booking.findFirst({ where: { showtimeId: morningShowtimeId, seatLabel: 'A1' } });
+    const b2 = await prisma.booking.findFirst({ where: { showtimeId: morningShowtimeId, seatLabel: 'A2' } });
+    expect(b1!.price).toBe(11000);
+    expect(b2!.price).toBe(8000);
+  });
+
+  test('심야(23시 이후) 회차는 심야 요금이 적용된다', async () => {
+    const username = `user1${rand()}`;
+    const agent = request.agent(app);
+    await signup(username);
+    await agent.post('/login').send({ username, password: VALID_PASSWORD });
+
+    const res = await book(agent, lateNightShowtimeId, {
+      seats: ['A1', 'A2'],
+      adultCount: 1,
+      teenCount: 1,
+      seniorCount: 0,
+      disabledCount: 0,
+    });
+    expect(res.status).toBe(302);
+
+    const b1 = await prisma.booking.findFirst({ where: { showtimeId: lateNightShowtimeId, seatLabel: 'A1' } });
+    const b2 = await prisma.booking.findFirst({ where: { showtimeId: lateNightShowtimeId, seatLabel: 'A2' } });
+    expect(b1!.price).toBe(9000);
+    expect(b2!.price).toBe(9000);
+  });
+
+  test('조조/심야 상관없이 경로·우대 요금은 고정이다', async () => {
+    const username = `user1${rand()}`;
+    const agent = request.agent(app);
+    await signup(username);
+    await agent.post('/login').send({ username, password: VALID_PASSWORD });
+
+    const res = await book(agent, morningShowtimeId, {
+      seats: ['B1', 'B2'],
+      adultCount: 0,
+      teenCount: 0,
+      seniorCount: 1,
+      disabledCount: 1,
+    });
+    expect(res.status).toBe(302);
+
+    const senior = await prisma.booking.findFirst({ where: { showtimeId: morningShowtimeId, seatLabel: 'B1' } });
+    const disabled = await prisma.booking.findFirst({ where: { showtimeId: morningShowtimeId, seatLabel: 'B2' } });
+    expect(senior!.price).toBe(7000);
+    expect(disabled!.price).toBe(5000);
   });
 
   test('선택한 좌석 수와 관람인원 수가 다르면 예매에 실패한다', async () => {
@@ -652,7 +747,7 @@ describe('booking flow', () => {
     expect(res.status).toBe(200);
     expect(res.text).toContain('A1');
     expect(res.text).toContain('A2');
-    expect(res.text).toContain('32,000');
+    expect(res.text).toContain('30,000');
     expect(res.text).toContain('20분전까지 취소 가능');
   });
 
@@ -779,7 +874,7 @@ describe('booking flow', () => {
       where: { userId: user!.id, showtimeId: payShowtimeId, seats: 'B1,B2' },
     });
     expect(attempt).not.toBeNull();
-    expect(attempt!.totalPrice).toBe(32000);
+    expect(attempt!.totalPrice).toBe(30000);
     expect(attempt!.completedAt).toBeNull();
   });
 
