@@ -8,7 +8,7 @@ const COLS = 14;
 const OCCUPANCY_RATIO = 0.1;
 // 로컬 시연용 더미 계정 비밀번호. 실제 서비스라면 시드에 두지 않을 값이지만,
 // 리뷰어가 관람 이력이 있는 화면을 바로 볼 수 있어야 해서 README와 함께 공개한다.
-const DEMO_PASSWORD = 'Demo1234!';
+const DEMO_PASSWORD = '!gcinema12';
 
 // Mirrors seatLabels() in src/routes/bookings.ts — kept as a small local
 // copy so the seed script doesn't depend on route module internals.
@@ -235,11 +235,11 @@ async function main() {
   // 두 탭을 영원히 빈 화면으로만 보게 된다. 그래서 관람 이력이 이미 있는
   // 데모 계정을 하나 만들어 둔다(README에 로그인 정보 안내).
   const demoUser = await prisma.user.upsert({
-    where: { username: 'demo01' },
+    where: { username: 'gcinema' },
     update: {},
     create: {
-      username: 'demo01',
-      email: 'demo01@gcinema.local',
+      username: 'gcinema',
+      email: 'gcinema@gcinema.local',
       phone: '010-0000-0002',
       passwordHash: await bcrypt.hash(DEMO_PASSWORD, 10),
     },
@@ -288,7 +288,7 @@ async function main() {
   }
 
   console.log(`시딩 완료: 영화 ${movieData.length}개, ${DAYS_AHEAD}일치 상영시간표, 회차별 좌석 ${Math.round(OCCUPANCY_RATIO * 100)}% 랜덤 예약`);
-  console.log(`데모 계정: demo01 / ${DEMO_PASSWORD} (관람 이력 ${pastShowtimes.length}건 — 마이페이지 확인용)`);
+  console.log(`데모 계정: gcinema / ${DEMO_PASSWORD} (관람 이력 ${pastShowtimes.length}건 — 마이페이지 확인용)`);
 }
 
 main()
