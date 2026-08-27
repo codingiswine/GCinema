@@ -163,7 +163,6 @@
   var SHOWTIME_ID = <%= showtime.id %>;
   var MOVIE_AGE_RATING = <%- JSON.stringify(showtime.movie.ageRating) %>;
   var COLS = <%= showtime.cols %>;
-  var GRID_ROWS = <%= rows %>;
   var SEATS_FLAT = <%- JSON.stringify(seats.map(function (s) { return { label: s.label, booked: s.booked }; })) %>;
   var CLOCK_ICON = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><polyline points="12 7 12 12 15.5 13.5"></polyline></svg>';
   var WARNING_ICON = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2 20h20L12 3z"></path><line x1="12" y1="9" x2="12" y2="14"></line><circle cx="12" cy="17.2" r="1" fill="currentColor" stroke="none"></circle></svg>';
@@ -177,7 +176,7 @@
 
   var counts = { ADULT: 0, TEEN: 0, SENIOR: 0, DISABLED: 0 };
   var acknowledged = { SENIOR: false, DISABLED: false };
-  var selectedGroups = []; // array of arrays of seat labels (pairs or a single leftover seat)
+  var selectedSeats = []; // 좌석 라벨 배열. 짝 강제 없이 한 자리씩 자유롭게 선택한다.
   var errorEl = document.getElementById('bookError');
 
   // "A10"처럼 열 번호가 두 자리인 좌석이 있어 문자열 정렬로는 A10 < A9 가 되므로,
@@ -193,7 +192,7 @@
     return counts.ADULT + counts.TEEN + counts.SENIOR + counts.DISABLED;
   }
   function selectedSeatCount() {
-    return selectedGroups.reduce(function (n, g) { return n + g.length; }, 0);
+    return selectedSeats.length;
   }
   function totalPrice() {
     return counts.ADULT * PRICES.ADULT + counts.TEEN * PRICES.TEEN +
@@ -212,36 +211,6 @@
     return document.querySelector('.seat[data-label="' + label + '"]');
   }
 
-  // 실제 상영관처럼, 한 행에서 예매되었거나 이번 세션에서 이미 선택된 좌석을
-  // 경계로 비어있는 구간(run)을 나누고 그 구간의 시작부터 2칸씩 고정 짝을
-  // 묶는다. 구간 길이가 홀수면 마지막 한 자리만 짝이 없는 "1인 전용" 좌석이
-  // 된다. 반환값은 { 좌석라벨: 짝라벨 또는 null }.
-  function computeSeatPartners() {
-    var takenLabels = {};
-    selectedGroups.flat().forEach(function (label) { takenLabels[label] = true; });
-    var partnerOf = {};
-
-    for (var r = 0; r < GRID_ROWS; r++) {
-      var rowSeats = SEATS_FLAT.slice(r * COLS, r * COLS + COLS);
-      var run = [];
-      var flush = function () {
-        for (var i = 0; i < run.length; i++) {
-          partnerOf[run[i]] = (i % 2 === 0) ? (run[i + 1] || null) : run[i - 1];
-        }
-        run = [];
-      };
-      rowSeats.forEach(function (seat) {
-        if (!seat.booked && !takenLabels[seat.label]) {
-          run.push(seat.label);
-        } else {
-          flush();
-        }
-      });
-      flush();
-    }
-    return partnerOf;
-  }
-
   // 우대 전용석은 "남은 인원 중 아직 안 채운 우대석 자리"가 있을 때만 고를 수
   // 있다. 인원수는 성인→청소년→경로→우대 순으로 좌석에 배정되므로(서버와 동일
   // 규칙), 지금까지 고른 좌석 수가 우대 이전 인원수 합계 이상일 때 다음 클릭이
@@ -251,23 +220,19 @@
     return counts.DISABLED > 0 && selectedSeatCount() >= nonDisabledTotal && selectedSeatCount() < totalTickets();
   }
 
-  // 선택 가능한 좌석 중, 지금 남은 인원수로는 고를 수 없는 좌석에
-  // seat-blocked 표시를 한다. 2명 이상 남았을 때 짝이 없는(1인 전용) 좌석만
-  // 대상이며, 1명만 남았을 때는 아무 빈 좌석이나 고를 수 있어 막지 않는다.
-  // 우대 전용석은 이 규칙과 별개로, 우대 자리를 채울 차례가 아니면 항상 막는다.
+  // 우대 전용석은 우대 자리를 채울 차례가 아니면 항상 seat-blocked로 막는다.
+  // 좌석은 짝 강제 없이 자유롭게 고를 수 있으므로 그 외에는 막을 이유가 없다.
   function updateBlockedSeats() {
     var remaining = totalTickets() - selectedSeatCount();
     var seatButtons = document.querySelectorAll('.seat:not(.booked)');
     seatButtons.forEach(function (el) { el.classList.remove('seat-blocked'); });
 
-    var partnerOf = remaining >= 2 ? computeSeatPartners() : {};
     var priorityOk = canPickPrioritySeatNow();
     seatButtons.forEach(function (el) {
       var label = el.dataset.label;
-      if (selectedGroups.some(function (g) { return g.indexOf(label) !== -1; })) return;
-      var pairBlocked = remaining >= 2 && !partnerOf[label];
+      if (selectedSeats.indexOf(label) !== -1) return;
       var priorityBlocked = PRIORITY_SEATS.indexOf(label) !== -1 && remaining > 0 && !priorityOk;
-      if (pairBlocked || priorityBlocked) el.classList.add('seat-blocked');
+      if (priorityBlocked) el.classList.add('seat-blocked');
     });
   }
 
@@ -282,7 +247,7 @@
     document.querySelectorAll('.seat:not(.booked)').forEach(function (el) {
       el.classList.remove('selected');
     });
-    var selectedLabels = selectedGroups.flat();
+    var selectedLabels = selectedSeats;
     selectedLabels.forEach(function (label) {
       var el = seatEl(label);
       if (el) el.classList.add('selected');
@@ -308,7 +273,7 @@
   }
 
   function resetSelection() {
-    selectedGroups = [];
+    selectedSeats = [];
     clearError();
   }
 
@@ -364,13 +329,12 @@
         return;
       }
 
-      // toggle off: clicking a seat that's part of an already-selected group
-      for (var i = 0; i < selectedGroups.length; i++) {
-        if (selectedGroups[i].indexOf(label) !== -1) {
-          selectedGroups.splice(i, 1);
-          render();
-          return;
-        }
+      // toggle off: 이미 선택된 좌석이면 선택을 해제한다.
+      var idx = selectedSeats.indexOf(label);
+      if (idx !== -1) {
+        selectedSeats.splice(idx, 1);
+        render();
+        return;
       }
 
       if (selectedSeatCount() >= total) {
@@ -383,36 +347,17 @@
         return;
       }
 
-      var remaining = total - selectedSeatCount();
-
-      if (remaining === 1) {
-        selectedGroups.push([label]);
-      } else {
-        var partner = computeSeatPartners()[label] || null;
-        if (!partner) {
-          showError('옆자리에 빈 좌석이 없어 짝을 지을 수 없습니다. 다른 좌석을 선택해주세요.');
-          return;
-        }
-        selectedGroups.push([label, partner]);
-      }
+      // 짝 강제 없이 한 자리씩 자유롭게 선택한다. 일행이어도 따로 앉고 싶을
+      // 수 있어, 옆자리가 비어있는지 여부와 상관없이 빈 좌석이면 고를 수 있다.
+      selectedSeats.push(label);
       render();
     });
 
     el.addEventListener('mouseenter', function () {
       if (el.classList.contains('seat-blocked')) return;
       var label = el.dataset.label;
-      var inGroup = selectedGroups.some(function (g) { return g.indexOf(label) !== -1; });
-      if (inGroup) return;
-
+      if (selectedSeats.indexOf(label) !== -1) return;
       el.classList.add('hover-preview');
-      var remaining = totalTickets() - selectedSeatCount();
-      if (remaining >= 2) {
-        var partner = computeSeatPartners()[label];
-        if (partner) {
-          var partnerEl = seatEl(partner);
-          if (partnerEl) partnerEl.classList.add('hover-preview');
-        }
-      }
     });
     el.addEventListener('mouseleave', function () {
       document.querySelectorAll('.seat.hover-preview').forEach(function (s) {
@@ -425,7 +370,7 @@
   // (좌석/인원은 URL로 넘기고, 결제 페이지에서 서버가 다시 검증한다)
   function goToCheckout() {
     var params = new URLSearchParams({
-      seats: selectedGroups.flat().join(','),
+      seats: selectedSeats.join(','),
       adultCount: counts.ADULT,
       teenCount: counts.TEEN,
       seniorCount: counts.SENIOR,
