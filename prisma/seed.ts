@@ -52,7 +52,12 @@ function pickRandomSeats(totalSeats: number, cols: number, ratio: number): strin
 }
 
 // 박스오피스 1~2위인 오디세이/스파이더맨은 같은 시간표(오디세이 심야 포함)를 쓴다.
-const TOP_MOVIE_TIMES = ['10:35', '14:00', '17:15', '20:35', '23:50'];
+// 박스오피스 1~2위(오디세이/스파이더맨)는 둘 다 인기작이라 상영관 앞이 한꺼번에
+// 붐비지 않도록 20분씩 어긋나게 잡는다. +20분으로 밀면 마지막 회차가 자정을
+// 넘어가(23:50+20분=다음날 00:10) 날짜 계산이 꼬이므로 스파이더맨 쪽을 -20분
+// 당겨서 간격만 20분으로 유지한다.
+const ODYSSEY_TIMES = ['10:35', '14:00', '17:15', '20:35', '23:50'];
+const SPIDERMAN_TIMES = ['10:15', '13:40', '16:55', '20:15', '23:30'];
 
 // Real GCinema-style capacities per movie. 67 isn't a clean multiple of
 // COLS, so that hall's last row ends up partially filled (see seatLabels
@@ -76,7 +81,7 @@ const movieData = [
 그리고 거스를 수 없는 운명의 시련이 기다리고 있는데…`,
     theaterName: '1관',
     totalSeats: 84,
-    times: TOP_MOVIE_TIMES,
+    times: ODYSSEY_TIMES,
     satisfactionPercent: 98,
     bookingRatePercent: 72.1,
     cumulativeViewers: '746만',
@@ -103,7 +108,7 @@ const movieData = [
 '스파이더맨'으로 그들 앞에 서게 되는데...`,
     theaterName: '2관',
     totalSeats: 84,
-    times: TOP_MOVIE_TIMES,
+    times: SPIDERMAN_TIMES,
     satisfactionPercent: 97,
     bookingRatePercent: 9.3,
     cumulativeViewers: '821.5만',
@@ -123,7 +128,7 @@ const movieData = [
 봉고차 트렁크에는 낯선 한 남자가 실려 있는데…`,
     theaterName: '3관',
     totalSeats: 42,
-    times: ['10:30', '12:45', '17:20', '21:50'],
+    times: ['10:00', '13:00', '16:00', '19:00', '21:00'],
     satisfactionPercent: 95,
     bookingRatePercent: 3.7,
     cumulativeViewers: '5,486',
@@ -150,7 +155,7 @@ const movieData = [
 과연 '플랫' 가족은 무사히 살아남아 원래의 일상으로 돌아갈 수 있을까?`,
     theaterName: '4관',
     totalSeats: 67,
-    times: ['10:30', '13:10', '17:40', '20:50'],
+    times: ['10:20', '13:20', '16:20', '19:20', '22:20'],
     satisfactionPercent: 92,
     bookingRatePercent: 3.2,
     cumulativeViewers: '1,850',
