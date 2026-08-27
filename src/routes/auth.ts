@@ -11,6 +11,52 @@ const PASSWORD_PATTERN = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z0-9\s]).{8,}$/;
 const USERNAME_PATTERN = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z0-9]{5,}$/;
 const EMAIL_PRESET_DOMAINS = ['naver.com', 'gmail.com', 'daum.net', 'hanmail.net', 'nate.com'];
 
+// 비밀번호를 계속 바꿔가며 찔러보는 시도(무차별 대입)를 늦춘다. 계정 단위로만
+// 세는데, 접속 IP 단위로 잠그면 회사·학교처럼 하나의 IP를 여럿이 나눠 쓰는
+// 환경에서 무고한 사용자까지 함께 막히기 때문이다.
+//
+// 프로세스 메모리에만 쌓으므로 서버를 재시작하면 초기화되고, 여러 대로 늘리면
+// 서버마다 따로 센다. 실제 서비스라면 Redis처럼 공유 저장소에 둬야 하지만,
+// 이 과제 범위에서는 외부 의존성을 늘리지 않는 쪽을 택했다.
+const MAX_LOGIN_FAILURES = 5;
+const LOGIN_LOCK_MS = 60_000;
+const LOGIN_ATTEMPT_LIMIT = 10_000; // 메모리가 무한정 늘지 않도록 하는 상한
+
+type LoginAttempt = { failures: number; lockedUntil: number };
+const loginAttempts = new Map<string, LoginAttempt>();
+
+// 잠금이 풀린 지 오래인 기록은 남겨둘 이유가 없다. 항목이 상한을 넘을 때만
+// 훑어서 지운다(타이머를 따로 돌리지 않기 위함).
+function pruneLoginAttempts(now: number) {
+  if (loginAttempts.size < LOGIN_ATTEMPT_LIMIT) return;
+  for (const [key, attempt] of loginAttempts) {
+    if (attempt.lockedUntil <= now) loginAttempts.delete(key);
+  }
+}
+
+// 잠겨 있으면 남은 초, 아니면 0.
+function loginLockRemainingSec(username: string): number {
+  const attempt = loginAttempts.get(username);
+  if (!attempt) return 0;
+  const now = Date.now();
+  if (attempt.lockedUntil > now) return Math.ceil((attempt.lockedUntil - now) / 1000);
+  // 잠금이 끝났으면 실패 횟수도 함께 털어낸다.
+  if (attempt.lockedUntil !== 0) loginAttempts.delete(username);
+  return 0;
+}
+
+function recordLoginFailure(username: string) {
+  const now = Date.now();
+  pruneLoginAttempts(now);
+  const attempt = loginAttempts.get(username) ?? { failures: 0, lockedUntil: 0 };
+  attempt.failures += 1;
+  if (attempt.failures >= MAX_LOGIN_FAILURES) {
+    attempt.lockedUntil = now + LOGIN_LOCK_MS;
+    attempt.failures = 0;
+  }
+  loginAttempts.set(username, attempt);
+}
+
 function emptyFormValues() {
   return {
     username: '',
@@ -136,11 +182,27 @@ authRouter.get('/login', (req, res) => {
 
 authRouter.post('/login', asyncHandler(async (req, res) => {
   const { username, password, next } = req.body;
+
+  // 잠긴 동안에는 비밀번호가 맞아도 통과시키지 않는다. 맞았을 때만 통과시키면
+  // 공격자에게 "이번 건 정답이었다"를 알려주는 셈이라 방어가 되지 않는다.
+  const lockedFor = loginLockRemainingSec(username);
+  if (lockedFor > 0) {
+    return res.status(429).render('login', {
+      error: `로그인 시도가 너무 많습니다. ${lockedFor}초 후에 다시 시도해주세요.`,
+      next: safeNext(next),
+      justSignedUp: false,
+    });
+  }
+
   const user = await prisma.user.findUnique({ where: { username } });
   const ok = user && (await bcrypt.compare(password, user.passwordHash));
   if (!ok || !user) {
+    recordLoginFailure(username);
     return res.status(401).render('login', { error: '아이디 또는 비밀번호가 올바르지 않습니다.', next: safeNext(next), justSignedUp: false });
   }
+
+  // 성공했으면 그동안의 실패 기록은 의미가 없다.
+  loginAttempts.delete(username);
 
   // 로그인 전 세션 ID를 그대로 쓰면, 그 ID를 미리 알고 있던 쪽이 로그인
   // 성공과 동시에 이 계정의 세션을 넘겨받는다(세션 고정 공격). 권한이 바뀌는

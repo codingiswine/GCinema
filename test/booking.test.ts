@@ -271,6 +271,41 @@ describe('booking flow', () => {
     expect(sessionIdOf(secondLogin)).not.toBe(sessionIdOf(firstLogin));
   });
 
+  test('로그인 실패가 반복되면 그 계정은 잠시 잠긴다 (무차별 대입 방어)', async () => {
+    const username = `user1${rand()}`;
+    await signup(username);
+
+    // 연속 실패를 임계치까지 쌓는다.
+    for (let i = 0; i < 5; i++) {
+      const res = await request(app).post('/login').send({ username, password: 'WrongPass1!' });
+      expect(res.status).toBe(401);
+    }
+
+    const blocked = await request(app).post('/login').send({ username, password: 'WrongPass1!' });
+    expect(blocked.status).toBe(429);
+
+    // 잠긴 동안에는 올바른 비밀번호도 통과시키지 않아야 실제 방어가 된다.
+    const correct = await request(app).post('/login').send({ username, password: VALID_PASSWORD });
+    expect(correct.status).toBe(429);
+  });
+
+  test('로그인에 성공하면 실패 기록이 초기화된다', async () => {
+    const username = `user1${rand()}`;
+    await signup(username);
+
+    for (let i = 0; i < 3; i++) {
+      await request(app).post('/login').send({ username, password: 'WrongPass1!' });
+    }
+    const ok = await request(app).post('/login').send({ username, password: VALID_PASSWORD });
+    expect(ok.status).toBe(302);
+
+    // 초기화되지 않았다면 남은 2회로 잠겨버린다.
+    for (let i = 0; i < 3; i++) {
+      const res = await request(app).post('/login').send({ username, password: 'WrongPass1!' });
+      expect(res.status).toBe(401);
+    }
+  });
+
   test('비로그인 상태로 좌석 페이지 접근 시 로그인 후 원래 페이지로 돌아간다', async () => {
     const agent = request.agent(app);
     const guarded = await agent.get(`/showtimes/${showtimeId}`);
