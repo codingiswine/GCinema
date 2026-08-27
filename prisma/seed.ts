@@ -52,12 +52,13 @@ function pickRandomSeats(totalSeats: number, cols: number, ratio: number): strin
 }
 
 // 박스오피스 1~2위인 오디세이/스파이더맨은 같은 시간표(오디세이 심야 포함)를 쓴다.
-// 박스오피스 1~2위(오디세이/스파이더맨)는 둘 다 인기작이라 상영관 앞이 한꺼번에
-// 붐비지 않도록 20분씩 어긋나게 잡는다. +20분으로 밀면 마지막 회차가 자정을
-// 넘어가(23:50+20분=다음날 00:10) 날짜 계산이 꼬이므로 스파이더맨 쪽을 -20분
-// 당겨서 간격만 20분으로 유지한다.
-const ODYSSEY_TIMES = ['10:35', '14:00', '17:15', '20:35', '23:50'];
-const SPIDERMAN_TIMES = ['10:15', '13:40', '16:55', '20:15', '23:30'];
+// 회차 간격을 각 영화의 실제 러닝타임 그대로 둔다(청소·환기 버퍼 없이 꽉 채운
+// 값이라 분 단위가 딱 떨어지지 않는다 — 172분/145분/111분/99분 간격이 그대로
+// 드러나는 게 의도한 모습이다). 12세 관람가(스파이더맨·오크 스트리트)는 9시대로
+// 앞당기고, 15세 관람가(오디세이·경주기행)는 그보다 늦게 시작해 네 영화 20개
+// 회차 시작 시각이 하나도 겹치지 않도록 짰다(직접 계산해 확인함).
+const ODYSSEY_TIMES = ['10:30', '13:22', '16:14', '19:06', '21:58']; // 172분 간격
+const SPIDERMAN_TIMES = ['09:00', '11:25', '13:50', '16:15', '18:40']; // 145분 간격
 
 // Real GCinema-style capacities per movie. 67 isn't a clean multiple of
 // COLS, so that hall's last row ends up partially filled (see seatLabels
@@ -128,7 +129,7 @@ const movieData = [
 봉고차 트렁크에는 낯선 한 남자가 실려 있는데…`,
     theaterName: '3관',
     totalSeats: 42,
-    times: ['10:00', '13:00', '16:00', '19:00', '21:00'],
+    times: ['11:00', '12:51', '14:42', '16:33'], // 111분 간격, 15세라 오후 시작
     satisfactionPercent: 95,
     bookingRatePercent: 3.7,
     cumulativeViewers: '5,486',
@@ -155,7 +156,7 @@ const movieData = [
 과연 '플랫' 가족은 무사히 살아남아 원래의 일상으로 돌아갈 수 있을까?`,
     theaterName: '4관',
     totalSeats: 67,
-    times: ['10:20', '13:20', '16:20', '19:20', '22:20'],
+    times: ['09:30', '11:09', '12:48', '14:27'], // 99분 간격, 12세라 9시대 시작
     satisfactionPercent: 92,
     bookingRatePercent: 3.2,
     cumulativeViewers: '1,850',
