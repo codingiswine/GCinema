@@ -60,9 +60,6 @@ function seatLabels(totalSeats: number, cols: number): string[] {
   return labels;
 }
 
-// 모든 상영관의 맨 앞줄(A) 가운데 두 자리는 우대(장애인) 전용석으로 지정한다.
-// 한 줄이 너무 좁으면(예: 2열) "가운데 두 자리"가 앞줄 전체가 되어버려 의미가
-// 없으므로, 실제 상영관 규모(4열 이상)에서만 적용한다.
 // "A10"처럼 열 번호가 두 자리인 좌석이 있어 문자열 정렬로는 A10이 A9보다 앞서므로,
 // 행 문자와 열 숫자를 나눠 비교한다. 화면 표시용으로만 쓴다.
 function sortSeatLabels(labels: string[]): string[] {
@@ -71,6 +68,9 @@ function sortSeatLabels(labels: string[]): string[] {
   );
 }
 
+// 모든 상영관의 맨 앞줄(A) 가운데 두 자리는 우대(장애인) 전용석으로 지정한다.
+// 한 줄이 너무 좁으면(예: 2열) "가운데 두 자리"가 앞줄 전체가 되어버려 의미가
+// 없으므로, 실제 상영관 규모(4열 이상)에서만 적용한다.
 function priorityDisabledSeats(cols: number): Set<string> {
   if (cols < 4) return new Set();
   const mid = Math.floor(cols / 2);
@@ -83,7 +83,7 @@ bookingsRouter.get('/showtimes/:id', requireLogin, asyncHandler(async (req, res)
     where: { id: showtimeId },
     include: { movie: true, bookings: { where: { cancelledAt: null } } },
   });
-  if (!showtime) return res.status(404).send('상영 정보를 찾을 수 없습니다.');
+  if (!showtime) return res.status(404).render('error', { status: 404, message: '상영 정보를 찾을 수 없습니다.' });
   // 지난 회차의 좌석 페이지로 직접 들어오면 해당 영화 상영시간표로 되돌린다.
   if (showtime.startAt.getTime() <= Date.now()) {
     return res.redirect(`/movies/${showtime.movieId}`);
@@ -310,7 +310,7 @@ bookingsRouter.get('/bookings/complete', requireLogin, asyncHandler(async (req, 
     orderBy: { seatLabel: 'asc' },
   });
   if (bookings.length === 0) {
-    return res.status(404).send('예매 내역을 찾을 수 없습니다.');
+    return res.status(404).render('error', { status: 404, message: '예매 내역을 찾을 수 없습니다.' });
   }
 
   const totalPrice = bookings.reduce((sum, b) => sum + b.price, 0);

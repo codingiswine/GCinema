@@ -30,6 +30,18 @@ const book = (
     .post(`/showtimes/${showtimeId}/pay`)
     .send({ paymentMethod: 'CARD', agreeCancelPolicy: 'on', ...order });
 
+// 응답이 새로 내려준 세션 ID. express-session은 세션 ID가 바뀔 때만
+// Set-Cookie를 다시 내리므로, 값이 없으면 기존 세션이 그대로 유지된 것이다.
+function sessionIdOf(res: request.Response): string | undefined {
+  const raw = res.headers['set-cookie'];
+  if (!raw) return undefined;
+  const cookies = Array.isArray(raw) ? raw : [raw];
+  return cookies
+    .find((c) => c.startsWith('connect.sid='))
+    ?.split(';')[0]
+    .split('=')[1];
+}
+
 const HOUR = 60 * 60 * 1000;
 
 describe('booking flow', () => {
@@ -239,6 +251,24 @@ describe('booking flow', () => {
     const res = await agent.post('/login').send({ username, password: VALID_PASSWORD });
     expect(res.status).toBe(302);
     expect(res.headers['set-cookie']).toBeDefined();
+  });
+
+  test('로그인하면 세션 ID가 새로 발급된다 (세션 고정 공격 방지)', async () => {
+    const first = `user1${rand()}`;
+    const second = `user1${rand()}`;
+    await signup(first);
+    await signup(second);
+
+    // 이미 세션을 쥐고 있는 브라우저가 다른 계정으로 로그인하는 상황.
+    // 세션 ID가 그대로면, 앞서 그 ID를 알고 있던 쪽이 새로 로그인한 계정의
+    // 세션을 그대로 넘겨받게 된다(세션 고정).
+    const agent = request.agent(app);
+    const firstLogin = await agent.post('/login').send({ username: first, password: VALID_PASSWORD });
+    const secondLogin = await agent.post('/login').send({ username: second, password: VALID_PASSWORD });
+
+    expect(sessionIdOf(firstLogin)).toBeDefined();
+    expect(sessionIdOf(secondLogin)).toBeDefined();
+    expect(sessionIdOf(secondLogin)).not.toBe(sessionIdOf(firstLogin));
   });
 
   test('비로그인 상태로 좌석 페이지 접근 시 로그인 후 원래 페이지로 돌아간다', async () => {

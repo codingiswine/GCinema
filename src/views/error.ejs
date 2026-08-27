@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="ko">
+<%- include('partials/head') %>
+<body>
+<%- include('partials/nav') %>
+
+<div class="error-page">
+  <p class="error-code"><%= status %></p>
+  <h1 class="error-title"><%= message %></h1>
+  <p class="error-desc">주소가 바뀌었거나, 요청하신 정보를 더 이상 찾을 수 없습니다.</p>
+  <div class="error-actions">
+    <a class="btn-primary" href="/movies">영화 목록으로</a>
+    <% if (userId) { %>
+      <a class="btn-secondary" href="/bookings">마이페이지</a>
+    <% } else { %>
+      <a class="btn-secondary" href="/login">로그인</a>
+    <% } %>
+  </div>
+</div>
+
+<%- include('partials/footer') %>
+</body>
+</html>

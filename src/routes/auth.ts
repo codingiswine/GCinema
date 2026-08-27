@@ -142,6 +142,13 @@ authRouter.post('/login', asyncHandler(async (req, res) => {
     return res.status(401).render('login', { error: '아이디 또는 비밀번호가 올바르지 않습니다.', next: safeNext(next), justSignedUp: false });
   }
 
+  // 로그인 전 세션 ID를 그대로 쓰면, 그 ID를 미리 알고 있던 쪽이 로그인
+  // 성공과 동시에 이 계정의 세션을 넘겨받는다(세션 고정 공격). 권한이 바뀌는
+  // 시점에는 세션 ID를 새로 발급해야 한다.
+  await new Promise<void>((resolve, reject) => {
+    req.session.regenerate((err) => (err ? reject(err) : resolve()));
+  });
+
   req.session.userId = user.id;
   res.redirect(safeNext(next) || '/movies');
 }));

@@ -40,7 +40,7 @@ moviesRouter.get('/movies', asyncHandler(async (_req, res) => {
 moviesRouter.get('/movies/:id/detail', asyncHandler(async (req, res) => {
   const movieId = Number(req.params.id);
   const movie = await prisma.movie.findUnique({ where: { id: movieId } });
-  if (!movie) return res.status(404).send('영화를 찾을 수 없습니다.');
+  if (!movie) return res.status(404).render('error', { status: 404, message: '영화를 찾을 수 없습니다.' });
 
   const dateOptions = buildDateOptions();
   const userId = req.session.userId;
@@ -106,7 +106,7 @@ moviesRouter.get('/movies/:id', asyncHandler(async (req, res) => {
     prisma.movie.findMany({ orderBy: { id: 'asc' } }),
     prisma.movie.findUnique({ where: { id: movieId } }),
   ]);
-  if (!movie) return res.status(404).send('영화를 찾을 수 없습니다.');
+  if (!movie) return res.status(404).render('error', { status: 404, message: '영화를 찾을 수 없습니다.' });
 
   const dateOptions = buildDateOptions();
   const requestedKey = typeof req.query.date === 'string' ? req.query.date : '';
