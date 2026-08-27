@@ -8,7 +8,9 @@ export const authRouter = Router();
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PHONE_PATTERN = /^01[016789]-?\d{3,4}-?\d{4}$/;
 const PASSWORD_PATTERN = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z0-9\s]).{8,}$/;
-const USERNAME_PATTERN = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z0-9]{5,}$/;
+// 문자만 5자 이상이거나, 문자+숫자 조합으로 5자 이상이면 된다. 숫자만으로는
+// 안 되므로(전화번호 뒷자리 등과 헷갈릴 수 있어) 문자를 최소 하나 요구한다.
+const USERNAME_PATTERN = /^(?=.*[A-Za-z])[A-Za-z0-9]{5,}$/;
 const EMAIL_PRESET_DOMAINS = ['naver.com', 'gmail.com', 'daum.net', 'hanmail.net', 'nate.com'];
 
 // 비밀번호를 계속 바꿔가며 찔러보는 시도(무차별 대입)를 늦춘다. 계정 단위로만

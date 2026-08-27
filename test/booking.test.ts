@@ -133,12 +133,31 @@ describe('booking flow', () => {
     expect(res.status).toBe(409);
   });
 
-  test('아이디가 5자 미만이거나 숫자를 포함하지 않으면 회원가입에 실패한다', async () => {
-    const res1 = await signup('ab1');
-    expect(res1.status).toBe(400);
-    const res2 = await signup('abcdef');
-    expect(res2.status).toBe(400);
-    const user = await prisma.user.findUnique({ where: { username: 'abcdef' } });
+  test('아이디가 5자 미만이면 회원가입에 실패한다', async () => {
+    const res = await signup('ab1');
+    expect(res.status).toBe(400);
+  });
+
+  test('아이디는 문자로만 5자 이상이어도 회원가입할 수 있다', async () => {
+    const username = `letters${rand()}`.replace(/[0-9]/g, 'a'); // rand()가 섞는 숫자까지 전부 문자로
+    const res = await signup(username);
+    expect(res.status).toBe(302);
+    const user = await prisma.user.findUnique({ where: { username } });
+    expect(user).not.toBeNull();
+  });
+
+  test('아이디는 문자+숫자 조합 5자 이상이어도 회원가입할 수 있다', async () => {
+    const username = `combo${rand()}`;
+    const res = await signup(username);
+    expect(res.status).toBe(302);
+    const user = await prisma.user.findUnique({ where: { username } });
+    expect(user).not.toBeNull();
+  });
+
+  test('아이디가 숫자로만 이루어지면 회원가입에 실패한다', async () => {
+    const res = await signup('123456');
+    expect(res.status).toBe(400);
+    const user = await prisma.user.findUnique({ where: { username: '123456' } });
     expect(user).toBeNull();
   });
 

@@ -65,7 +65,7 @@
   var checkBtn = document.getElementById('checkUsernameBtn');
   var statusEl = document.getElementById('usernameStatus');
   var usernameVerified = false;
-  var USERNAME_PATTERN = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z0-9]{5,}$/;
+  var USERNAME_PATTERN = /^(?=.*[A-Za-z])[A-Za-z0-9]{5,}$/;
 
   usernameInput.addEventListener('input', function () {
     usernameVerified = false;
@@ -81,7 +81,7 @@
     }
     if (!USERNAME_PATTERN.test(username)) {
       statusEl.style.color = '#c0392b';
-      statusEl.textContent = '아이디는 문자+숫자 포함 다섯 글자 이상으로 만들어주세요.';
+      statusEl.textContent = '아이디는 문자를 포함해 다섯 글자 이상으로 만들어주세요.';
       usernameVerified = false;
       return;
     }
@@ -120,7 +120,7 @@
     if (!USERNAME_PATTERN.test(usernameInput.value.trim())) {
       e.preventDefault();
       statusEl.style.color = '#c0392b';
-      statusEl.textContent = '아이디는 문자+숫자 포함 다섯 글자 이상으로 만들어주세요.';
+      statusEl.textContent = '아이디는 문자를 포함해 다섯 글자 이상으로 만들어주세요.';
       usernameInput.focus();
       return;
     }
