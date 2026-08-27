@@ -302,6 +302,14 @@ button:hover { background: #444; }
 @media (max-width: 640px) {
   .seat-page-layout { flex-direction: column; }
   .seat-sidebar { flex: none; width: 100%; position: static; }
+  /* 한 줄 14석 기준 26px+4px 간격이면 416px이라 폰 화면(360~390px)을 넘어
+     좌석표가 잘린다. 좁은 화면에서는 좌석을 줄여 한 줄이 통째로 들어오게 한다.
+     이때 브라우저 기본 <button> 좌우 패딩을 지우지 않으면 border-box 기준
+     폭이 23px 밑으로 내려가지 않아, padding까지 함께 0으로 둔다.
+     결과: 14 x 21px + 13 x 3px = 333px < 336px(360px 폰의 가용 폭). */
+  body { padding: 16px 12px; }
+  .seat { width: 21px; height: 21px; padding: 0; font-size: 0.46rem; }
+  .seat-row { gap: 3px; }
 }
 
 .btn-primary { background: #0f6e8c; padding: 10px 20px; color: #fff; text-decoration: none; }
