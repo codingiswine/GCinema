@@ -48,10 +48,10 @@
           <a class="showtime-btn" href="/showtimes/<%= st.id %>" data-start="<%= st.startAt.toISOString() %>">
             <span class="showtime-time"><%= new Date(st.startAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false }) %></span>
             <span class="showtime-seats">
+              <%= st.theaterName %> ·
               <%= st.totalSeats - st._count.bookings %>/<%= st.totalSeats %>
               <% if (stHour < 10) { %><span class="showtime-band-icon" title="조조">☀️</span><% } %>
               <% if (stHour >= 23) { %><span class="showtime-band-icon" title="심야">🌙</span><% } %>
-              · <%= st.theaterName %>
             </span>
           </a>
         <% }) %>
