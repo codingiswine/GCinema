@@ -820,6 +820,24 @@ describe('booking flow', () => {
     expect(resaved!.comment).toBe('다시 보니 별로예요');
   });
 
+  test('앱을 거치지 않고 DB에 직접 넣어도 1~5를 벗어난 평점은 거부된다', async () => {
+    const username = `user1${rand()}`;
+    await signup(username);
+    const user = await prisma.user.findUnique({ where: { username } });
+
+    // 라우트 검증을 우회해도 마지막 방어선인 DB 제약이 막아야 한다.
+    await expect(
+      prisma.movieReview.create({ data: { userId: user!.id, movieId, rating: 99 } })
+    ).rejects.toThrow();
+    await expect(
+      prisma.movieReview.create({ data: { userId: user!.id, movieId, rating: 0 } })
+    ).rejects.toThrow();
+
+    // 정상 범위는 그대로 저장된다.
+    const ok = await prisma.movieReview.create({ data: { userId: user!.id, movieId, rating: 5 } });
+    expect(ok.rating).toBe(5);
+  });
+
   test('평점은 1~5 범위를 벗어나면 저장되지 않는다', async () => {
     const username = `user1${rand()}`;
     const agent = request.agent(app);
