@@ -20,6 +20,7 @@ docker compose up -d          # PostgreSQL 컨테이너 기동
 npx prisma migrate dev        # 스키마 마이그레이션
 npx prisma db seed            # 영화/상영시간 더미 데이터 시딩
 ```
+`git clone` 후 위 명령만 그대로 실행하면 별도 설정 없이 동일하게 재현되도록 설계했습니다 — `.env.example`이 `docker-compose.yml`의 DB 계정과 그대로 맞물려 있고, 외부 API·서비스에 대한 런타임 의존성이 없어(영화 데이터도 전부 시드로 생성) 운영체제나 로컬 환경에 상관없이 동작합니다.
 
 ### 3. 서버 실행
 ```bash
