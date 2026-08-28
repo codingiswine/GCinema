@@ -16,7 +16,8 @@
     </a>
     <div class="movie-info">
       <p class="movie-stats">
-        <span>만족도 <%= movie.satisfactionPercent %>% · 예매율 <%= movie.bookingRatePercent %>% · 누적 <%= movie.cumulativeViewers %></span>
+        <span>만족도 <%= movie.satisfactionPercent %>% · 예매율 <%= movie.bookingRatePercent %>%</span>
+        <span>누적 <%= movie.cumulativeViewers %></span>
       </p>
       <a class="movie-book-btn" href="/movies/<%= movie.id %>">예매하기</a>
     </div>

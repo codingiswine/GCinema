@@ -53,6 +53,7 @@ nav a:hover { text-decoration: underline; }
 .breadcrumb { display: flex; align-items: center; gap: 6px; }
 .breadcrumb-sep { color: #aaa; font-weight: 400; }
 .breadcrumb-current { color: #333; font-weight: 600; }
+.breadcrumb-home { display: inline-flex; align-items: center; }
 h1 { font-size: 1.4rem; }
 .card {
   border: 1px solid #ddd;
@@ -195,7 +196,10 @@ button:hover { background: #444; }
 }
 .movie-age-overlay { position: absolute; right: 8px; bottom: 8px; }
 .movie-info { padding: 10px 8px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
-.movie-stats { margin: 0; color: #666; font-size: 0.66rem; word-break: keep-all; }
+.movie-stats {
+  margin: 0; color: #666; font-size: 0.8rem; word-break: keep-all;
+  display: flex; flex-direction: column; align-items: center; gap: 2px; text-align: center;
+}
 .movie-book-btn {
   display: block; text-align: center; text-decoration: none;
   background: #fff; color: #111; border: 1px solid #ccc; border-radius: 6px;
@@ -465,7 +469,7 @@ button:hover { background: #444; }
 .detail-title-row { display: flex; align-items: center; justify-content: center; gap: 10px; }
 .detail-title-row h1 { margin: 0; font-size: 1.3rem; }
 .detail-meta { margin: 0; color: #777; font-size: 0.9rem; }
-.detail-stats { font-size: 0.85rem; justify-content: center; }
+.detail-stats { font-size: 0.95rem; }
 .detail-divider { border: none; border-top: 1px solid #ddd; margin: 4px 0; width: 100%; }
 .detail-synopsis {
   white-space: pre-line; line-height: 1.7; color: #333; margin: 0 0 6px;
