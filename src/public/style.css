@@ -129,6 +129,9 @@ a.verify-method-card:hover { border-color: #0f6e8c; }
 .verify-field { margin-bottom: 14px; }
 .verify-field label { display: block; font-size: 0.85rem; color: #555; margin-bottom: 4px; }
 .verify-field-row { display: flex; gap: 6px; align-items: center; }
+.verify-phone-row select, .verify-phone-row input[type="text"] { flex: 1; min-width: 0; }
+.verify-gender-digit { flex: none !important; width: 32px; text-align: center; }
+.verify-masked-digits { letter-spacing: 2px; color: #999; }
 .verify-legal-note { font-size: 0.78rem; color: #999; margin: 4px 0 18px; }
 .verify-actions { display: flex; gap: 10px; }
 .verify-actions button { flex: 1; }
