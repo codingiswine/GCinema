@@ -89,6 +89,19 @@
     errorEl.style.display = '';
   }
 
+  // 자음/모음만 있는 입력(예: "ㅁㄴㄴ")은 완성된 한글 음절(가-힣)이 아니라서
+  // 이 패턴에 걸러진다. 영문은 그대로 허용한다.
+  var NAME_PATTERN = /^[가-힣a-zA-Z]+$/;
+
+  // 생년월일/성별/휴대폰번호는 숫자만 받아야 하므로, 입력 즉시 숫자가 아닌
+  // 문자를 지워 애초에 문자가 들어갈 수 없게 한다(붙여넣기 포함).
+  ['verifyBirth', 'verifyGenderDigit', 'verifyPhoneMid', 'verifyPhoneLast'].forEach(function (id) {
+    var el = document.getElementById(id);
+    el.addEventListener('input', function () {
+      el.value = el.value.replace(/\D/g, '');
+    });
+  });
+
   document.getElementById('verifyRequestBtn').addEventListener('click', function () {
     var allAgreed = Array.prototype.every.call(agreeRequired, function (cb) { return cb.checked; });
     if (!allAgreed) {
@@ -102,6 +115,22 @@
     var last = document.getElementById('verifyPhoneLast').value.trim();
     if (!name || !birth || !genderDigit || !mid || !last) {
       showVerifyError('모든 항목을 입력해주세요.');
+      return;
+    }
+    if (!NAME_PATTERN.test(name)) {
+      showVerifyError('이름은 한글 또는 영문으로만 입력해주세요.');
+      return;
+    }
+    if (!/^\d{6}$/.test(birth)) {
+      showVerifyError('생년월일 6자리를 숫자로 입력해주세요.');
+      return;
+    }
+    if (!/^\d$/.test(genderDigit)) {
+      showVerifyError('성별 코드 1자리를 숫자로 입력해주세요.');
+      return;
+    }
+    if (!/^\d{3,4}$/.test(mid) || !/^\d{4}$/.test(last)) {
+      showVerifyError('휴대폰 번호를 숫자로 정확히 입력해주세요.');
       return;
     }
     errorEl.style.display = 'none';
