@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ko">
+<%- include('partials/head') %>
+<body>
+<%- include('partials/nav') %>
+<div class="verify-page">
+  <h1>회원가입을 위한 본인인증 단계입니다.</h1>
+  <p class="verify-subtitle">원하시는 인증방법을 선택해주세요.</p>
+
+  <div class="verify-method-list">
+    <span class="verify-method-card disabled">
+      <span class="verify-method-icon">🔒</span>
+      <span>간편인증</span>
+    </span>
+    <div class="verify-method-row">
+      <a class="verify-method-card" href="/signup/verify/phone">
+        <span class="verify-method-icon">📱</span>
+        <span>휴대폰 인증</span>
+      </a>
+      <span class="verify-method-card disabled">
+        <span class="verify-method-icon">🛡️</span>
+        <span>아이핀 인증</span>
+      </span>
+    </div>
+  </div>
+
+  <ul class="verify-notice">
+    <li>본인인증에 입력한 정보는 인증 확인 용도로만 사용되며 별도로 저장되지 않습니다.</li>
+  </ul>
+</div>
+<%- include('partials/footer') %>
+</body>
+</html>

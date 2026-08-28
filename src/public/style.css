@@ -107,6 +107,31 @@ h1 { font-size: 1.4rem; }
 .faq-item p { margin: 10px 0 2px; color: #444; font-size: 0.92rem; line-height: 1.5; }
 .auth-box { max-width: 360px; margin: 40px auto 0; text-align: center; }
 .auth-box form { margin: 0 auto; text-align: left; }
+
+.verify-page { max-width: 480px; margin: 40px auto 0; text-align: center; }
+.verify-subtitle { color: #666; margin-bottom: 24px; }
+.verify-method-list { display: flex; flex-direction: column; gap: 14px; }
+.verify-method-row { display: flex; gap: 14px; }
+.verify-method-card {
+  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 10px;
+  border: 1px solid #ddd; border-radius: 10px; padding: 28px 16px;
+  text-decoration: none; color: #111; background: #fff;
+}
+a.verify-method-card:hover { border-color: #0f6e8c; }
+.verify-method-card.disabled { color: #aaa; background: #f7f7f7; cursor: not-allowed; }
+.verify-method-icon { font-size: 1.8rem; }
+.verify-notice { list-style: none; padding: 0; margin: 20px 0 0; font-size: 0.78rem; color: #999; line-height: 1.5; text-align: left; }
+
+.verify-phone-box { max-width: 480px; margin: 30px auto 0; }
+.verify-phone-box h1 { font-size: 1.3rem; line-height: 1.4; margin: 0 0 20px; }
+.verify-agree { display: flex; flex-direction: column; gap: 8px; margin-bottom: 18px; font-size: 0.88rem; }
+.verify-agree-row { display: flex; align-items: center; gap: 6px; }
+.verify-field { margin-bottom: 14px; }
+.verify-field label { display: block; font-size: 0.85rem; color: #555; margin-bottom: 4px; }
+.verify-field-row { display: flex; gap: 6px; align-items: center; }
+.verify-legal-note { font-size: 0.78rem; color: #999; margin: 4px 0 18px; }
+.verify-actions { display: flex; gap: 10px; }
+.verify-actions button { flex: 1; }
 form { display: flex; flex-direction: column; gap: 10px; max-width: 320px; }
 input, button {
   padding: 8px 10px;

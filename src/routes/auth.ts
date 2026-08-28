@@ -94,6 +94,19 @@ function buildFormValues(body: Record<string, string>) {
   };
 }
 
+// 실제 본인인증기관 연동 없이, 회원가입 앞에 "본인인증 단계"가 있다는 흐름만
+// 보여주는 모의 화면이다(모의 결제와 같은 이유 — 이 과제 범위에서 외부 인증
+// 연동은 하지 않되, 실제 가입 흐름에 흔히 있는 단계 자체는 화면으로 남긴다).
+// 인증 완료 처리는 서버를 거치지 않고 phone.ejs 안의 팝업에서 바로 /signup으로
+// 넘어가므로 별도 라우트/상태가 필요 없다.
+authRouter.get('/signup/verify', (_req, res) => {
+  res.render('signupVerify');
+});
+
+authRouter.get('/signup/verify/phone', (_req, res) => {
+  res.render('signupVerifyPhone');
+});
+
 authRouter.get('/signup', (_req, res) => {
   res.render('signup', { error: null, formValues: emptyFormValues(), duplicateField: null });
 });

@@ -139,6 +139,20 @@ describe('booking flow', () => {
     await prisma.$disconnect();
   });
 
+  test('회원가입 전 본인인증 안내 화면에는 휴대폰 인증 링크가 있다', async () => {
+    const res = await request(app).get('/signup/verify');
+    expect(res.status).toBe(200);
+    expect(res.text).toContain('본인인증');
+    expect(res.text).toContain('/signup/verify/phone');
+  });
+
+  test('휴대폰 본인인증 화면이 렌더링된다', async () => {
+    const res = await request(app).get('/signup/verify/phone');
+    expect(res.status).toBe(200);
+    expect(res.text).toContain('휴대폰 본인 인증');
+    expect(res.text).toContain('인증 요청');
+  });
+
   test('회원가입 성공', async () => {
     const username = `user1${rand()}`;
     const res = await signup(username);

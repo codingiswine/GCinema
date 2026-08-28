@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ko">
+<%- include('partials/head') %>
+<body>
+<%- include('partials/nav') %>
+<div class="verify-phone-box">
+  <h1>회원가입을 위해<br>휴대폰 본인 인증해주세요.</h1>
+
+  <div class="verify-agree">
+    <label class="verify-agree-row"><input type="checkbox" id="agreeAll" /> 휴대폰 본인확인 전체동의</label>
+    <label class="verify-agree-row"><input type="checkbox" class="agreeRequired" /> 개인정보 이용 동의(필수)</label>
+    <label class="verify-agree-row"><input type="checkbox" class="agreeRequired" /> 서비스 이용약관 동의(필수)</label>
+  </div>
+
+  <div class="verify-field">
+    <label for="verifyName">이름</label>
+    <input type="text" id="verifyName" placeholder="한글 또는 영문으로 입력해주세요." />
+  </div>
+  <div class="verify-field">
+    <label for="verifyBirth">생년월일</label>
+    <input type="text" id="verifyBirth" inputmode="numeric" maxlength="8" placeholder="생년월일 8자리 (예: 19900101)" />
+  </div>
+  <div class="verify-field">
+    <label for="verifyPhoneMid">휴대폰 번호</label>
+    <div class="verify-field-row">
+      <select id="verifyCarrier">
+        <option>SKT</option>
+        <option>KT</option>
+        <option>LG U+</option>
+      </select>
+      <select id="verifyPhonePrefix">
+        <option value="010">010</option>
+        <option value="011">011</option>
+        <option value="016">016</option>
+        <option value="017">017</option>
+        <option value="018">018</option>
+        <option value="019">019</option>
+      </select>
+      <input type="text" id="verifyPhoneMid" inputmode="numeric" maxlength="4" placeholder="1234" />
+      <span>-</span>
+      <input type="text" id="verifyPhoneLast" inputmode="numeric" maxlength="4" placeholder="5678" />
+    </div>
+  </div>
+
+  <p id="verifyError" class="error" style="display:none;"></p>
+  <p class="verify-legal-note">타인의 명의를 도용해 본인인증을 시도하는 경우 관련 법령에 따라 처벌받을 수 있습니다.</p>
+
+  <div class="verify-actions">
+    <button type="button" class="btn-secondary" id="verifyCancelBtn">취소</button>
+    <button type="button" id="verifyRequestBtn">인증 요청</button>
+  </div>
+</div>
+
+<!-- 본인인증 완료 안내 팝업 -->
+<div id="verifyDoneModal" class="modal-overlay" style="display:none;">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span>알림</span>
+    </div>
+    <div class="modal-body">
+      <p>본인인증이 완료되었습니다.<br>회원가입 페이지로 넘어갑니다.</p>
+    </div>
+    <button type="button" class="modal-confirm" id="verifyDoneConfirmBtn">확인</button>
+  </div>
+</div>
+
+<script>
+  document.getElementById('verifyCancelBtn').addEventListener('click', function () {
+    window.location.href = '/signup/verify';
+  });
+
+  var agreeAll = document.getElementById('agreeAll');
+  var agreeRequired = document.querySelectorAll('.agreeRequired');
+  agreeAll.addEventListener('change', function () {
+    agreeRequired.forEach(function (cb) { cb.checked = agreeAll.checked; });
+  });
+
+  var errorEl = document.getElementById('verifyError');
+  function showVerifyError(msg) {
+    errorEl.textContent = msg;
+    errorEl.style.display = '';
+  }
+
+  document.getElementById('verifyRequestBtn').addEventListener('click', function () {
+    var allAgreed = Array.prototype.every.call(agreeRequired, function (cb) { return cb.checked; });
+    if (!allAgreed) {
+      showVerifyError('필수 약관에 모두 동의해주세요.');
+      return;
+    }
+    var name = document.getElementById('verifyName').value.trim();
+    var birth = document.getElementById('verifyBirth').value.trim();
+    var mid = document.getElementById('verifyPhoneMid').value.trim();
+    var last = document.getElementById('verifyPhoneLast').value.trim();
+    if (!name || !birth || !mid || !last) {
+      showVerifyError('모든 항목을 입력해주세요.');
+      return;
+    }
+    errorEl.style.display = 'none';
+    document.getElementById('verifyDoneModal').style.display = 'flex';
+  });
+
+  document.getElementById('verifyDoneConfirmBtn').addEventListener('click', function () {
+    window.location.href = '/signup';
+  });
+</script>
+<%- include('partials/footer') %>
+</body>
+</html>
