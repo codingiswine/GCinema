@@ -98,8 +98,8 @@ const movieData = [
       { theaterName: '9층 · 2관', times: ODYSSEY_HALL2_TIMES },
     ],
     satisfactionPercent: 98,
-    bookingRatePercent: 72.1,
-    cumulativeViewers: '746만',
+    bookingRatePercent: 69.5,
+    cumulativeViewers: '780.6만',
   },
   {
     title: '스파이더맨: 브랜드 뉴 데이',
@@ -127,8 +127,8 @@ const movieData = [
       { theaterName: '10층 · 4관', times: SPIDERMAN_HALL2_TIMES },
     ],
     satisfactionPercent: 97,
-    bookingRatePercent: 9.3,
-    cumulativeViewers: '821.5만',
+    bookingRatePercent: 10.7,
+    cumulativeViewers: '829.7만',
   },
   {
     title: '경주기행',
@@ -146,9 +146,9 @@ const movieData = [
     totalSeats: 42,
     // 러닝타임(111분)+버퍼 20분을 5분 단위로 올린 135분 간격. 15세라 오후 시작.
     halls: [{ theaterName: '11층 · 5관', times: ['11:15', '13:30', '15:45', '18:00'] }],
-    satisfactionPercent: 95,
-    bookingRatePercent: 3.7,
-    cumulativeViewers: '5,486',
+    satisfactionPercent: 93,
+    bookingRatePercent: 3.5,
+    cumulativeViewers: '6.7만',
   },
   {
     title: '오크 스트리트의 마지막 날',
@@ -173,9 +173,9 @@ const movieData = [
     totalSeats: 67,
     // 러닝타임(99분)+버퍼 20분을 5분 단위로 올린 120분 간격. 12세라 9시대 시작.
     halls: [{ theaterName: '11층 · 6관', times: ['09:05', '11:05', '13:05', '15:05'] }],
-    satisfactionPercent: 92,
-    bookingRatePercent: 3.2,
-    cumulativeViewers: '1,850',
+    satisfactionPercent: 85,
+    bookingRatePercent: 2.9,
+    cumulativeViewers: '4.3만',
   },
 ];
 
