@@ -75,7 +75,7 @@
         <span class="age-badge age-<%= showtime.movie.ageRating %>"><%= showtime.movie.ageRating %></span>
         <h2><%= showtime.movie.title %></h2>
         <p class="seat-sidebar-theater"><%= showtime.theaterName %></p>
-        <p class="seat-sidebar-datetime"><%= new Date(showtime.startAt).toLocaleString('ko-KR') %></p>
+        <p class="seat-sidebar-datetime"><%= new Date(showtime.startAt).toLocaleString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }) %></p>
       </div>
       <% if (showtime.movie.posterUrl) { %>
         <img class="seat-sidebar-poster" src="<%= showtime.movie.posterUrl %>" alt="<%= showtime.movie.title %> 포스터" />

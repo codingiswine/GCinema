@@ -26,7 +26,7 @@
             <strong><%= showtime.movie.title %></strong>
           </p>
           <p class="pay-movie-meta"><%= showtime.theaterName %></p>
-          <p class="pay-movie-meta"><%= new Date(showtime.startAt).toLocaleString('ko-KR') %></p>
+          <p class="pay-movie-meta"><%= new Date(showtime.startAt).toLocaleString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }) %></p>
           <p class="pay-movie-meta">좌석 <strong><%= seatsForDisplay.join(', ') %></strong></p>
         </div>
       </div>

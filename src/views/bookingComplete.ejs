@@ -29,7 +29,7 @@
     <dd><%= showtime.theaterName %></dd>
 
     <dt>일시</dt>
-    <dd><%= new Date(showtime.startAt).toLocaleString('ko-KR') %></dd>
+    <dd><%= new Date(showtime.startAt).toLocaleString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }) %></dd>
 
     <dt>좌석</dt>
     <dd><%= bookings.map(function (b) { return b.seatLabel; }).join(', ') %></dd>

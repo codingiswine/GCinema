@@ -56,7 +56,7 @@
           <span class="booking-watched-label">관람완료</span>
         <% } %>
       </div>
-      <p><%= b.showtime.theaterName %> · <%= new Date(b.showtime.startAt).toLocaleString('ko-KR') %> · 좌석 <%= b.seatLabel %> · <%= categoryLabels[b.category] %> <%= b.price.toLocaleString() %>원</p>
+      <p><%= b.showtime.theaterName %> · <%= new Date(b.showtime.startAt).toLocaleString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }) %> · 좌석 <%= b.seatLabel %> · <%= categoryLabels[b.category] %> <%= b.price.toLocaleString() %>원</p>
       <% if (b.reservationNo) { %>
         <p class="booking-reservation-no">예매번호 <%= b.reservationNo %></p>
       <% } %>
