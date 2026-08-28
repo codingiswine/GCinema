@@ -201,7 +201,7 @@ button:hover { background: #444; }
   display: flex; flex-direction: column; align-items: center; gap: 2px; text-align: center;
 }
 .movie-stats-primary { display: inline-flex; align-items: center; gap: 4px; }
-.movie-stats-mark { width: 12px; height: 12px; object-fit: contain; flex-shrink: 0; }
+.movie-stats-heart { flex-shrink: 0; }
 .movie-book-btn {
   display: block; text-align: center; text-decoration: none;
   background: #fff; color: #111; border: 1px solid #ccc; border-radius: 6px;
@@ -472,7 +472,6 @@ button:hover { background: #444; }
 .detail-title-row h1 { margin: 0; font-size: 1.3rem; }
 .detail-meta { margin: 0; color: #777; font-size: 0.9rem; }
 .detail-stats { font-size: 0.95rem; }
-.detail-stats .movie-stats-mark { width: 15px; height: 15px; }
 .detail-divider { border: none; border-top: 1px solid #ddd; margin: 4px 0; width: 100%; }
 .detail-synopsis {
   white-space: pre-line; line-height: 1.7; color: #333; margin: 0 0 6px;
