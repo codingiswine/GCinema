@@ -9,6 +9,22 @@ GitHub: https://github.com/codingiswine/GCinema
 과제 지침에 최대한 부합하게 과제를 진행했습니다.
 과도한 기능 구현은 지양했고, 실제 서비스 수준의 완성도로 만들었습니다.
 
+## 데모
+
+![GCinema 데모](docs/demo/demo.gif)
+
+| ① 영화 목록 | ② 영화 상세 |
+|---|---|
+| ![영화 목록](docs/demo/01-movies.png) | ![영화 상세](docs/demo/02-detail.png) |
+
+| ③ 상영시간표 | ④ 좌석 선택 |
+|---|---|
+| ![상영시간표](docs/demo/03-schedule.png) | ![좌석 선택](docs/demo/04-seats.png) |
+
+| ⑤ 결제 | ⑥ 예매 완료 |
+|---|---|
+| ![결제](docs/demo/05-checkout.png) | ![예매 완료](docs/demo/06-complete.png) |
+
 ## 실행 방법
 
 ### 1. 사전 준비
