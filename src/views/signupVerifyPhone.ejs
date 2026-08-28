@@ -141,8 +141,9 @@
       showFieldError('verifyBirthError', '생년월일 6자리를 숫자로 입력해주세요.');
       return;
     }
-    if (!/^\d$/.test(genderDigit)) {
-      showFieldError('verifyBirthError', '성별 코드 1자리를 숫자로 입력해주세요.');
+    // 성별 코드는 내국인 기준 1~4만 유효하다(1·2: 1900년대생, 3·4: 2000년대생).
+    if (!/^[1234]$/.test(genderDigit)) {
+      showFieldError('verifyBirthError', '제대로된 생년월일/성별을 입력해주세요.');
       return;
     }
     var mid = document.getElementById('verifyPhoneMid').value.trim();
