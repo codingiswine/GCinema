@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ko">
+<%- include('partials/head') %>
+<body>
+<%- include('partials/nav') %>
+<div class="findid-page">
+  <h1 class="findid-title">아이디 찾기</h1>
+  <p class="findid-subtitle">등록된 회원정보로<br>아이디를 찾으실 수 있습니다.</p>
+
+  <div class="findid-method-list">
+    <div class="findid-method">
+      <label class="findid-method-row">
+        <input type="radio" name="findIdMethod" checked />
+        휴대폰 번호로 찾기
+      </label>
+      <div class="findid-inline-box">
+        <div class="findid-field">
+          <label for="findIdName">이름</label>
+          <input type="text" id="findIdName" placeholder="이름을 입력해주세요." />
+          <p id="findIdNameError" class="error" style="display:none;"></p>
+        </div>
+        <div class="findid-field">
+          <label for="findIdPhoneMid">휴대폰 번호</label>
+          <div class="findid-phone-row">
+            <select id="findIdCarrier">
+              <option value="">선택</option>
+              <option>SKT</option>
+              <option>KT</option>
+              <option>LG U+</option>
+              <option>SKT 알뜰폰</option>
+              <option>KT 알뜰폰</option>
+              <option>LGU+ 알뜰폰</option>
+            </select>
+            <select id="findIdPhonePrefix">
+              <option value="010">010</option>
+              <option value="011">011</option>
+              <option value="016">016</option>
+              <option value="017">017</option>
+              <option value="018">018</option>
+              <option value="019">019</option>
+            </select>
+            <input type="text" id="findIdPhoneMid" inputmode="numeric" maxlength="4" placeholder="1234" />
+            <span>-</span>
+            <input type="text" id="findIdPhoneLast" inputmode="numeric" maxlength="4" placeholder="5678" />
+          </div>
+          <p id="findIdPhoneError" class="error" style="display:none;"></p>
+        </div>
+      </div>
+    </div>
+
+    <label class="findid-method-row disabled"><input type="radio" name="findIdMethod" disabled /> 이메일주소로 찾기</label>
+    <label class="findid-method-row disabled"><input type="radio" name="findIdMethod" disabled /> 사업자등록번호로 찾기</label>
+    <label class="findid-method-row disabled"><input type="radio" name="findIdMethod" disabled /> 본인인증으로 찾기</label>
+  </div>
+
+  <div class="findid-actions">
+    <button type="button" class="btn-secondary" id="findIdCancelBtn">취소</button>
+    <button type="button" id="findIdNextBtn">다음</button>
+  </div>
+</div>
+
+<script>
+  document.getElementById('findIdCancelBtn').addEventListener('click', function () {
+    window.location.href = '/login';
+  });
+
+  ['findIdPhoneMid', 'findIdPhoneLast'].forEach(function (id) {
+    var el = document.getElementById(id);
+    el.addEventListener('input', function () {
+      el.value = el.value.replace(/\D/g, '');
+    });
+  });
+
+  var NAME_PATTERN = /^[가-힣]+$/;
+
+  document.getElementById('findIdNextBtn').addEventListener('click', function () {
+    document.getElementById('findIdNameError').style.display = 'none';
+    document.getElementById('findIdPhoneError').style.display = 'none';
+
+    var name = document.getElementById('findIdName').value.trim();
+    if (!name || !NAME_PATTERN.test(name)) {
+      var nameErrorEl = document.getElementById('findIdNameError');
+      nameErrorEl.textContent = name ? '이름은 한글로 입력해주세요.' : '이름을 입력해주세요.';
+      nameErrorEl.style.display = '';
+      return;
+    }
+
+    var carrier = document.getElementById('findIdCarrier').value;
+    var mid = document.getElementById('findIdPhoneMid').value.trim();
+    var last = document.getElementById('findIdPhoneLast').value.trim();
+    if (!carrier || !/^\d{3,4}$/.test(mid) || !/^\d{4}$/.test(last)) {
+      var phoneErrorEl = document.getElementById('findIdPhoneError');
+      phoneErrorEl.textContent = '통신사와 휴대폰 번호를 정확히 입력해주세요.';
+      phoneErrorEl.style.display = '';
+      return;
+    }
+
+    window.location.href = '/find-id/verify';
+  });
+</script>
+<%- include('partials/footer') %>
+</body>
+</html>

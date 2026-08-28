@@ -153,6 +153,41 @@ describe('booking flow', () => {
     expect(res.text).toContain('인증 요청');
   });
 
+  test('아이디 찾기 방법 선택 화면에는 휴대폰 번호로 찾기만 활성화되어 있다', async () => {
+    const res = await request(app).get('/find-id');
+    expect(res.status).toBe(200);
+    expect(res.text).toContain('휴대폰 번호로 찾기');
+    expect(res.text).toContain('/find-id/verify');
+  });
+
+  test('아이디 찾기 휴대폰 본인인증 화면이 렌더링된다', async () => {
+    const res = await request(app).get('/find-id/verify');
+    expect(res.status).toBe(200);
+    expect(res.text).toContain('휴대폰 본인 인증');
+  });
+
+  test('등록된 휴대폰 번호로 아이디 찾기에 성공하면 마스킹된 아이디를 보여준다', async () => {
+    const username = `findid${rand()}`;
+    const phone = randPhone();
+    await signup(username, `${username}@test.com`, phone);
+    const res = await request(app).post('/find-id/verify').send({ phone });
+    expect(res.status).toBe(200);
+    expect(res.text).toContain(username.slice(0, 3));
+    expect(res.text).toContain('*');
+    expect(res.text).not.toContain(username);
+  });
+
+  test('등록되지 않은 휴대폰 번호로는 아이디를 찾을 수 없다', async () => {
+    const res = await request(app).post('/find-id/verify').send({ phone: randPhone() });
+    expect(res.status).toBe(200);
+    expect(res.text).toContain('일치하는 아이디가 없습니다');
+  });
+
+  test('형식이 올바르지 않은 휴대폰 번호로는 아이디 찾기가 거부된다', async () => {
+    const res = await request(app).post('/find-id/verify').send({ phone: 'not-a-phone' });
+    expect(res.status).toBe(400);
+  });
+
   test('회원가입 성공', async () => {
     const username = `user1${rand()}`;
     const res = await signup(username);

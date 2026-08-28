@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ko">
+<%- include('partials/head') %>
+<body>
+<%- include('partials/nav') %>
+<div class="find-verify-box">
+  <h1>개인정보보호를 위해<br>휴대폰 본인 인증해주세요.</h1>
+  <% if (error) { %><p class="error"><%= error %></p><% } %>
+
+  <form method="post" action="/find-id/verify" id="findIdVerifyForm">
+    <label class="find-verify-agree-all"><input type="checkbox" id="agreeAll" /> 휴대폰 본인확인 전체동의</label>
+
+    <div class="find-verify-agree-grid">
+      <label class="find-verify-agree-item"><span><input type="checkbox" class="agreeRequired" /> 개인정보 이용 동의(필수)</span><span class="find-verify-detail">자세히</span></label>
+      <label class="find-verify-agree-item"><span><input type="checkbox" class="agreeRequired" /> 고유식별 정보 처리 동의(필수)</span><span class="find-verify-detail">자세히</span></label>
+      <label class="find-verify-agree-item"><span><input type="checkbox" class="agreeRequired" /> 서비스 이용약관 동의(필수)</span><span class="find-verify-detail">자세히</span></label>
+      <label class="find-verify-agree-item"><span><input type="checkbox" class="agreeRequired" /> 통신사 이용약관 동의(필수)</span><span class="find-verify-detail">자세히</span></label>
+    </div>
+    <p id="verifyAgreeError" class="error" style="display:none;"></p>
+
+    <h2 class="find-verify-section-title">인증정보 입력</h2>
+
+    <div class="find-verify-row">
+      <label for="verifyName">이름</label>
+      <div class="find-verify-row-fields">
+        <input type="text" id="verifyName" placeholder="이름을 입력해주세요." />
+      </div>
+    </div>
+    <p id="verifyNameError" class="error" style="display:none;"></p>
+
+    <div class="find-verify-row">
+      <label for="verifyBirth">생년월일/성별</label>
+      <div class="find-verify-row-fields">
+        <input type="text" id="verifyBirth" inputmode="numeric" maxlength="6" placeholder="생년월일 6자리" />
+        <span>-</span>
+        <input type="text" id="verifyGenderDigit" inputmode="numeric" maxlength="1" class="verify-gender-digit" />
+        <span class="verify-masked-digits">●●●●●●</span>
+      </div>
+    </div>
+    <p id="verifyBirthError" class="error" style="display:none;"></p>
+
+    <div class="find-verify-row">
+      <label for="verifyPhoneMid">휴대폰 번호</label>
+      <div class="find-verify-row-fields find-verify-phone-row">
+        <select id="verifyCarrier">
+          <option>SKT</option>
+          <option>KT</option>
+          <option>LG U+</option>
+          <option>SKT 알뜰폰</option>
+          <option>KT 알뜰폰</option>
+          <option>LGU+ 알뜰폰</option>
+        </select>
+        <select id="verifyPhonePrefix">
+          <option value="010">010</option>
+          <option value="011">011</option>
+          <option value="016">016</option>
+          <option value="017">017</option>
+          <option value="018">018</option>
+          <option value="019">019</option>
+        </select>
+        <input type="text" id="verifyPhoneMid" inputmode="numeric" maxlength="4" placeholder="1234" />
+        <span>-</span>
+        <input type="text" id="verifyPhoneLast" inputmode="numeric" maxlength="4" placeholder="5678" />
+      </div>
+    </div>
+    <p id="verifyPhoneError" class="error" style="display:none;"></p>
+
+    <p class="verify-legal-note">휴대폰 본인확인 시 타인 명의를 도용할 경우, “정보통신망법 제 49조”에 의거하여 5년 이하의 징역 또는 5천만원 이하의 벌금에 처할 수 있습니다.</p>
+
+    <input type="hidden" name="phone" id="phoneHidden" />
+
+    <div class="verify-actions">
+      <button type="button" class="btn-secondary" id="verifyCancelBtn">취소</button>
+      <button type="button" id="verifyRequestBtn">인증 요청</button>
+    </div>
+  </form>
+</div>
+
+<script>
+  document.getElementById('verifyCancelBtn').addEventListener('click', function () {
+    window.location.href = '/find-id';
+  });
+
+  var agreeAll = document.getElementById('agreeAll');
+  var agreeRequired = document.querySelectorAll('.agreeRequired');
+  agreeAll.addEventListener('change', function () {
+    agreeRequired.forEach(function (cb) { cb.checked = agreeAll.checked; });
+  });
+
+  var fieldErrorIds = ['verifyAgreeError', 'verifyNameError', 'verifyBirthError', 'verifyPhoneError'];
+  function clearFieldErrors() {
+    fieldErrorIds.forEach(function (id) {
+      var el = document.getElementById(id);
+      el.textContent = '';
+      el.style.display = 'none';
+    });
+  }
+  function showFieldError(id, msg) {
+    var el = document.getElementById(id);
+    el.textContent = msg;
+    el.style.display = '';
+  }
+
+  var NAME_PATTERN = /^[가-힣]+$/;
+
+  ['verifyBirth', 'verifyGenderDigit', 'verifyPhoneMid', 'verifyPhoneLast'].forEach(function (id) {
+    var el = document.getElementById(id);
+    el.addEventListener('input', function () {
+      el.value = el.value.replace(/\D/g, '');
+    });
+  });
+
+  document.getElementById('verifyRequestBtn').addEventListener('click', function () {
+    clearFieldErrors();
+
+    var allAgreed = Array.prototype.every.call(agreeRequired, function (cb) { return cb.checked; });
+    if (!allAgreed) {
+      showFieldError('verifyAgreeError', '필수 약관에 모두 동의해주세요.');
+      return;
+    }
+    var name = document.getElementById('verifyName').value.trim();
+    if (!name) {
+      showFieldError('verifyNameError', '이름을 입력해주세요.');
+      return;
+    }
+    if (!NAME_PATTERN.test(name)) {
+      showFieldError('verifyNameError', '이름은 한글로 입력해주세요.');
+      return;
+    }
+    var birth = document.getElementById('verifyBirth').value.trim();
+    var genderDigit = document.getElementById('verifyGenderDigit').value.trim();
+    if (!birth || !genderDigit) {
+      showFieldError('verifyBirthError', '생년월일/성별을 입력해주세요.');
+      return;
+    }
+    if (!/^\d{6}$/.test(birth)) {
+      showFieldError('verifyBirthError', '생년월일 6자리를 숫자로 입력해주세요.');
+      return;
+    }
+    if (!/^[1234]$/.test(genderDigit)) {
+      showFieldError('verifyBirthError', '제대로된 생년월일/성별을 입력해주세요.');
+      return;
+    }
+    var prefix = document.getElementById('verifyPhonePrefix').value;
+    var mid = document.getElementById('verifyPhoneMid').value.trim();
+    var last = document.getElementById('verifyPhoneLast').value.trim();
+    if (!mid || !last) {
+      showFieldError('verifyPhoneError', '휴대폰 번호를 입력해주세요.');
+      return;
+    }
+    if (!/^\d{3,4}$/.test(mid) || !/^\d{4}$/.test(last)) {
+      showFieldError('verifyPhoneError', '휴대폰 번호를 숫자로 정확히 입력해주세요.');
+      return;
+    }
+
+    document.getElementById('phoneHidden').value = prefix + '-' + mid + '-' + last;
+    document.getElementById('findIdVerifyForm').submit();
+  });
+</script>
+<%- include('partials/footer') %>
+</body>
+</html>

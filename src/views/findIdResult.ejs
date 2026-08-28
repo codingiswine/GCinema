@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ko">
+<%- include('partials/head') %>
+<body>
+<%- include('partials/nav') %>
+<div class="verify-page">
+  <h1>아이디 찾기</h1>
+  <% if (maskedUsername) { %>
+    <p class="verify-subtitle">입력하신 정보와<br>일치하는 아이디 정보입니다.</p>
+    <div class="findid-result-box">
+      <p class="findid-result-label">GCinema 아이디</p>
+      <p class="findid-result-value"><%= maskedUsername %></p>
+    </div>
+    <p class="findid-result-note">개인정보보호를 위해 아이디 뒷자리는 *로 표시됩니다.</p>
+    <button type="button" id="findIdResultLoginBtn">로그인하러 가기</button>
+  <% } else { %>
+    <p class="verify-subtitle">입력하신 정보와<br>일치하는 아이디가 없습니다.</p>
+    <button type="button" id="findIdResultRetryBtn" class="btn-secondary">다시 찾기</button>
+  <% } %>
+</div>
+<script>
+  var loginBtn = document.getElementById('findIdResultLoginBtn');
+  if (loginBtn) loginBtn.addEventListener('click', function () { window.location.href = '/login'; });
+  var retryBtn = document.getElementById('findIdResultRetryBtn');
+  if (retryBtn) retryBtn.addEventListener('click', function () { window.location.href = '/find-id'; });
+</script>
+<%- include('partials/footer') %>
+</body>
+</html>

@@ -107,6 +107,35 @@ authRouter.get('/signup/verify/phone', (_req, res) => {
   res.render('signupVerifyPhone');
 });
 
+// 아이디 찾기: 이름/생년월일 등 본인확인 입력값 자체는 회원가입 본인인증과
+// 마찬가지로 서버에 저장되거나 실제로 대조되지 않는 모의 절차지만("본인 확인"
+// 단계는 이 과제 범위에서 외부 인증기관 없이 흉내만 낸다), 마지막에 조회하는
+// "휴대폰 번호로 아이디 찾기" 자체는 User.phone(unique)로 실제 조회한다.
+authRouter.get('/find-id', (_req, res) => {
+  res.render('findId');
+});
+
+authRouter.get('/find-id/verify', (_req, res) => {
+  res.render('findIdVerifyPhone', { error: null });
+});
+
+// 아이디 뒷자리를 그대로 노출하면 다른 사람이 휴대폰 번호만 알아도 계정을
+// 특정할 수 있어, 앞 3글자만 보여주고 나머지는 길이를 유지한 채 마스킹한다.
+function maskUsername(username: string): string {
+  const visible = username.slice(0, 3);
+  const maskedLength = Math.max(username.length - 3, 2);
+  return visible + '*'.repeat(maskedLength);
+}
+
+authRouter.post('/find-id/verify', asyncHandler(async (req, res) => {
+  const { phone } = req.body;
+  if (!PHONE_PATTERN.test(phone || '')) {
+    return res.status(400).render('findIdVerifyPhone', { error: '휴대폰 번호를 정확히 입력해주세요.' });
+  }
+  const user = await prisma.user.findUnique({ where: { phone } });
+  res.render('findIdResult', { maskedUsername: user ? maskUsername(user.username) : null });
+}));
+
 authRouter.get('/signup', (_req, res) => {
   res.render('signup', { error: null, formValues: emptyFormValues(), duplicateField: null });
 });
