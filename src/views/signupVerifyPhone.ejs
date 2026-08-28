@@ -19,9 +19,9 @@
   <div class="verify-field">
     <label for="verifyBirth">생년월일/성별</label>
     <div class="verify-field-row">
-      <input type="text" id="verifyBirth" inputmode="numeric" maxlength="6" placeholder="생년월일 6자리 (예: 101125)" />
+      <input type="text" id="verifyBirth" inputmode="numeric" maxlength="6" placeholder="생년월일 6자리" />
       <span>-</span>
-      <input type="text" id="verifyGenderDigit" inputmode="numeric" maxlength="1" placeholder="3" class="verify-gender-digit" />
+      <input type="text" id="verifyGenderDigit" inputmode="numeric" maxlength="1" class="verify-gender-digit" />
       <span class="verify-masked-digits">●●●●●●</span>
     </div>
   </div>
@@ -29,16 +29,12 @@
     <label for="verifyPhoneMid">휴대폰 번호</label>
     <div class="verify-field-row verify-phone-row">
       <select id="verifyCarrier">
-        <optgroup label="통신사">
-          <option>SKT</option>
-          <option>KT</option>
-          <option>LG U+</option>
-        </optgroup>
-        <optgroup label="알뜰폰">
-          <option>SKT 알뜰폰</option>
-          <option>KT 알뜰폰</option>
-          <option>LGU+ 알뜰폰</option>
-        </optgroup>
+        <option>SKT</option>
+        <option>KT</option>
+        <option>LG U+</option>
+        <option>SKT 알뜰폰</option>
+        <option>KT 알뜰폰</option>
+        <option>LGU+ 알뜰폰</option>
       </select>
       <select id="verifyPhonePrefix">
         <option value="010">010</option>
