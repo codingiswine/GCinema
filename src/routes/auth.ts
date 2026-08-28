@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import bcrypt from 'bcrypt';
+import crypto from 'crypto';
 import { prisma } from '../db';
 import { asyncHandler } from '../middleware/asyncHandler';
 
@@ -136,6 +137,75 @@ authRouter.post('/find-id/verify', asyncHandler(async (req, res) => {
   res.render('findIdResult', { maskedUsername: user ? maskUsername(user.username) : null });
 }));
 
+// 비밀번호 찾기: 아이디 찾기와 달리 실제로 계정 비밀번호를 바꾸는 민감한
+// 동작이라, 마지막 재설정 단계는 "아이디를 입력했다"만으로는 통과시키지
+// 않는다. 휴대폰 본인인증 단계(POST /find-password/verify)에서
+// User.username + User.phone이 실제로 같은 계정 것인지 서버가 대조하고,
+// 통과해야만 5분짜리 1회용 토큰을 발급해 그 토큰을 가진 요청만 비밀번호를
+// 바꿀 수 있게 한다. 로그인 실패 기록(loginAttempts)과 같은 이유로
+// 메모리에만 두었다 — 재시작하면 초기화되고 서버를 늘리면 각자 센다.
+type ResetToken = { username: string; expiresAt: number };
+const resetTokens = new Map<string, ResetToken>();
+const RESET_TOKEN_TTL_MS = 5 * 60 * 1000;
+
+function issueResetToken(username: string): string {
+  const token = crypto.randomBytes(24).toString('hex');
+  resetTokens.set(token, { username, expiresAt: Date.now() + RESET_TOKEN_TTL_MS });
+  return token;
+}
+
+authRouter.get('/find-password', (_req, res) => {
+  res.render('resetPasswordFindId');
+});
+
+authRouter.get('/find-password/method', (req, res) => {
+  res.render('resetPasswordMethod', { username: String(req.query.username || '') });
+});
+
+authRouter.get('/find-password/verify', (req, res) => {
+  res.render('resetPasswordVerifyPhone', { username: String(req.query.username || ''), error: null });
+});
+
+authRouter.post('/find-password/verify', asyncHandler(async (req, res) => {
+  const { username, phone } = req.body;
+  if (!PHONE_PATTERN.test(phone || '')) {
+    return res.status(400).render('resetPasswordVerifyPhone', { username, error: '휴대폰 번호를 정확히 입력해주세요.' });
+  }
+  const user = await prisma.user.findUnique({ where: { username } });
+  if (!user || user.phone !== phone) {
+    return res.status(400).render('resetPasswordVerifyPhone', {
+      username,
+      error: '아이디와 일치하는 휴대폰 번호가 아닙니다.',
+    });
+  }
+  res.render('resetPasswordNew', { token: issueResetToken(username), error: null });
+}));
+
+authRouter.post('/find-password/reset', asyncHandler(async (req, res) => {
+  const { token, password, passwordConfirm } = req.body;
+  const entry = resetTokens.get(token);
+  if (!entry || entry.expiresAt < Date.now()) {
+    resetTokens.delete(token);
+    return res.status(400).render('error', {
+      status: 400,
+      message: '인증이 만료되었습니다. 비밀번호 찾기를 다시 시도해주세요.',
+    });
+  }
+  if (!PASSWORD_PATTERN.test(password || '')) {
+    return res.status(400).render('resetPasswordNew', {
+      token,
+      error: '비밀번호는 영문, 숫자, 특수문자를 포함해 8자 이상이어야 합니다.',
+    });
+  }
+  if (password !== passwordConfirm) {
+    return res.status(400).render('resetPasswordNew', { token, error: '비밀번호가 일치하지 않습니다.' });
+  }
+  const passwordHash = await bcrypt.hash(password, 10);
+  await prisma.user.update({ where: { username: entry.username }, data: { passwordHash } });
+  resetTokens.delete(token);
+  res.redirect('/login?reset=1');
+}));
+
 authRouter.get('/signup', (_req, res) => {
   res.render('signup', { error: null, formValues: emptyFormValues(), duplicateField: null });
 });
@@ -225,7 +295,12 @@ function safeNext(value: unknown): string | null {
 }
 
 authRouter.get('/login', (req, res) => {
-  res.render('login', { error: null, next: safeNext(req.query.next), justSignedUp: req.query.signup === '1' });
+  res.render('login', {
+    error: null,
+    next: safeNext(req.query.next),
+    justSignedUp: req.query.signup === '1',
+    justReset: req.query.reset === '1',
+  });
 });
 
 authRouter.post('/login', asyncHandler(async (req, res) => {
@@ -239,6 +314,7 @@ authRouter.post('/login', asyncHandler(async (req, res) => {
       error: `로그인 시도가 너무 많습니다. ${lockedFor}초 후에 다시 시도해주세요.`,
       next: safeNext(next),
       justSignedUp: false,
+      justReset: false,
     });
   }
 
@@ -246,7 +322,12 @@ authRouter.post('/login', asyncHandler(async (req, res) => {
   const ok = user && (await bcrypt.compare(password, user.passwordHash));
   if (!ok || !user) {
     recordLoginFailure(username);
-    return res.status(401).render('login', { error: '아이디 또는 비밀번호가 올바르지 않습니다.', next: safeNext(next), justSignedUp: false });
+    return res.status(401).render('login', {
+      error: '아이디 또는 비밀번호가 올바르지 않습니다.',
+      next: safeNext(next),
+      justSignedUp: false,
+      justReset: false,
+    });
   }
 
   // 성공했으면 그동안의 실패 기록은 의미가 없다.

@@ -13,7 +13,7 @@
   <button type="submit">로그인</button>
 </form>
 <p>계정이 없으신가요? <a href="/signup/verify">회원가입</a></p>
-<p class="auth-find-links"><a href="/find-id">아이디 찾기</a> · <span class="auth-find-disabled">비밀번호 찾기</span></p>
+<p class="auth-find-links"><a href="/find-id">아이디 찾기</a> · <a href="/find-password">비밀번호 찾기</a></p>
 </div>
 
 <!-- 회원가입 완료 안내 팝업 -->
@@ -27,6 +27,20 @@
       <p>회원가입이 완료되었습니다. 로그인 해주세요.</p>
     </div>
     <button type="button" class="modal-confirm" data-modal="signupDoneModal">확인</button>
+  </div>
+</div>
+
+<!-- 비밀번호 변경 완료 안내 팝업 -->
+<div id="resetDoneModal" class="modal-overlay" style="display:<%= justReset ? 'flex' : 'none' %>;">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span>알림</span>
+      <button type="button" class="modal-close" data-modal="resetDoneModal">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p>비밀번호가 변경되었습니다. 새 비밀번호로 로그인해주세요.</p>
+    </div>
+    <button type="button" class="modal-confirm" data-modal="resetDoneModal">확인</button>
   </div>
 </div>
 

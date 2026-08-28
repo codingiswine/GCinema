@@ -188,6 +188,74 @@ describe('booking flow', () => {
     expect(res.status).toBe(400);
   });
 
+  test('비밀번호 찾기 화면들이 렌더링된다', async () => {
+    const idRes = await request(app).get('/find-password');
+    expect(idRes.status).toBe(200);
+    expect(idRes.text).toContain('비밀번호 찾기');
+
+    const methodRes = await request(app).get('/find-password/method?username=abc');
+    expect(methodRes.status).toBe(200);
+    expect(methodRes.text).toContain('휴대폰 본인인증');
+
+    const verifyRes = await request(app).get('/find-password/verify?username=abc');
+    expect(verifyRes.status).toBe(200);
+    expect(verifyRes.text).toContain('휴대폰 본인 인증');
+  });
+
+  test('아이디와 일치하지 않는 휴대폰 번호로는 비밀번호를 재설정할 수 없다', async () => {
+    const username = `resetpw${rand()}`;
+    await signup(username);
+
+    const res = await request(app)
+      .post('/find-password/verify')
+      .send({ username, phone: randPhone() });
+    expect(res.status).toBe(400);
+    expect(res.text).toContain('일치하는 휴대폰 번호가 아닙니다');
+  });
+
+  test('아이디와 휴대폰 번호가 일치하면 새 비밀번호로 로그인할 수 있다', async () => {
+    const username = `resetpw${rand()}`;
+    const phone = randPhone();
+    await signup(username, `${username}@test.com`, phone);
+
+    const verifyRes = await request(app).post('/find-password/verify').send({ username, phone });
+    expect(verifyRes.status).toBe(200);
+    const tokenMatch = verifyRes.text.match(/name="token" value="([^"]+)"/);
+    expect(tokenMatch).not.toBeNull();
+    const token = tokenMatch![1];
+
+    const newPassword = 'NewPassword1!';
+    const resetRes = await request(app)
+      .post('/find-password/reset')
+      .send({ token, password: newPassword, passwordConfirm: newPassword });
+    expect(resetRes.status).toBe(302);
+    expect(resetRes.headers.location).toBe('/login?reset=1');
+
+    const loginRes = await request(app).post('/login').send({ username, password: newPassword });
+    expect(loginRes.status).toBe(302);
+
+    // 재설정 토큰은 1회용이라 같은 토큰으로 다시 시도하면 만료 처리된다.
+    const reuseRes = await request(app)
+      .post('/find-password/reset')
+      .send({ token, password: 'AnotherPass1!', passwordConfirm: 'AnotherPass1!' });
+    expect(reuseRes.status).toBe(400);
+  });
+
+  test('비밀번호 확인이 일치하지 않으면 비밀번호를 재설정할 수 없다', async () => {
+    const username = `resetpw${rand()}`;
+    const phone = randPhone();
+    await signup(username, `${username}@test.com`, phone);
+
+    const verifyRes = await request(app).post('/find-password/verify').send({ username, phone });
+    const token = verifyRes.text.match(/name="token" value="([^"]+)"/)![1];
+
+    const res = await request(app)
+      .post('/find-password/reset')
+      .send({ token, password: 'Password1!', passwordConfirm: 'Different1!' });
+    expect(res.status).toBe(400);
+    expect(res.text).toContain('일치하지 않습니다');
+  });
+
   test('회원가입 성공', async () => {
     const username = `user1${rand()}`;
     const res = await signup(username);
