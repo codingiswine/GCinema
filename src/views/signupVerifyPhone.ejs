@@ -10,11 +10,13 @@
     <label class="verify-agree-row"><input type="checkbox" id="agreeAll" /> 휴대폰 본인확인 전체동의</label>
     <label class="verify-agree-row"><input type="checkbox" class="agreeRequired" /> 개인정보 이용 동의(필수)</label>
     <label class="verify-agree-row"><input type="checkbox" class="agreeRequired" /> 서비스 이용약관 동의(필수)</label>
+    <p id="verifyAgreeError" class="error" style="display:none;"></p>
   </div>
 
   <div class="verify-field">
     <label for="verifyName">이름</label>
     <input type="text" id="verifyName" placeholder="이름을 입력해주세요." />
+    <p id="verifyNameError" class="error" style="display:none;"></p>
   </div>
   <div class="verify-field">
     <label for="verifyBirth">생년월일/성별</label>
@@ -24,6 +26,7 @@
       <input type="text" id="verifyGenderDigit" inputmode="numeric" maxlength="1" class="verify-gender-digit" />
       <span class="verify-masked-digits">●●●●●●</span>
     </div>
+    <p id="verifyBirthError" class="error" style="display:none;"></p>
   </div>
   <div class="verify-field">
     <label for="verifyPhoneMid">휴대폰 번호</label>
@@ -48,9 +51,9 @@
       <span>-</span>
       <input type="text" id="verifyPhoneLast" inputmode="numeric" maxlength="4" placeholder="5678" />
     </div>
+    <p id="verifyPhoneError" class="error" style="display:none;"></p>
   </div>
 
-  <p id="verifyError" class="error" style="display:none;"></p>
   <p class="verify-legal-note">타인의 명의를 도용해 본인인증을 시도하는 경우 관련 법령에 따라 처벌받을 수 있습니다.</p>
 
   <div class="verify-actions">
@@ -83,15 +86,24 @@
     agreeRequired.forEach(function (cb) { cb.checked = agreeAll.checked; });
   });
 
-  var errorEl = document.getElementById('verifyError');
-  function showVerifyError(msg) {
-    errorEl.textContent = msg;
-    errorEl.style.display = '';
+  // 에러는 원인이 된 줄 옆에 바로 보여준다(화면 맨 아래 공용 문구 대신).
+  var fieldErrorIds = ['verifyAgreeError', 'verifyNameError', 'verifyBirthError', 'verifyPhoneError'];
+  function clearFieldErrors() {
+    fieldErrorIds.forEach(function (id) {
+      var el = document.getElementById(id);
+      el.textContent = '';
+      el.style.display = 'none';
+    });
+  }
+  function showFieldError(id, msg) {
+    var el = document.getElementById(id);
+    el.textContent = msg;
+    el.style.display = '';
   }
 
-  // 자음/모음만 있는 입력(예: "ㅁㄴㄴ")은 완성된 한글 음절(가-힣)이 아니라서
-  // 이 패턴에 걸러진다. 영문은 그대로 허용한다.
-  var NAME_PATTERN = /^[가-힣a-zA-Z]+$/;
+  // 자음/모음만 있는 입력(예: "ㅁㄴㄴ")과 영문 모두 걸러지고, 완성된 한글
+  // 음절(가-힣)만 통과한다.
+  var NAME_PATTERN = /^[가-힣]+$/;
 
   // 생년월일/성별/휴대폰번호는 숫자만 받아야 하므로, 입력 즉시 숫자가 아닌
   // 문자를 지워 애초에 문자가 들어갈 수 없게 한다(붙여넣기 포함).
@@ -103,37 +115,46 @@
   });
 
   document.getElementById('verifyRequestBtn').addEventListener('click', function () {
+    clearFieldErrors();
+
     var allAgreed = Array.prototype.every.call(agreeRequired, function (cb) { return cb.checked; });
     if (!allAgreed) {
-      showVerifyError('필수 약관에 모두 동의해주세요.');
+      showFieldError('verifyAgreeError', '필수 약관에 모두 동의해주세요.');
       return;
     }
     var name = document.getElementById('verifyName').value.trim();
-    var birth = document.getElementById('verifyBirth').value.trim();
-    var genderDigit = document.getElementById('verifyGenderDigit').value.trim();
-    var mid = document.getElementById('verifyPhoneMid').value.trim();
-    var last = document.getElementById('verifyPhoneLast').value.trim();
-    if (!name || !birth || !genderDigit || !mid || !last) {
-      showVerifyError('모든 항목을 입력해주세요.');
+    if (!name) {
+      showFieldError('verifyNameError', '이름을 입력해주세요.');
       return;
     }
     if (!NAME_PATTERN.test(name)) {
-      showVerifyError('이름은 한글 또는 영문으로만 입력해주세요.');
+      showFieldError('verifyNameError', '이름은 한글로 입력해주세요.');
+      return;
+    }
+    var birth = document.getElementById('verifyBirth').value.trim();
+    var genderDigit = document.getElementById('verifyGenderDigit').value.trim();
+    if (!birth || !genderDigit) {
+      showFieldError('verifyBirthError', '생년월일/성별을 입력해주세요.');
       return;
     }
     if (!/^\d{6}$/.test(birth)) {
-      showVerifyError('생년월일 6자리를 숫자로 입력해주세요.');
+      showFieldError('verifyBirthError', '생년월일 6자리를 숫자로 입력해주세요.');
       return;
     }
     if (!/^\d$/.test(genderDigit)) {
-      showVerifyError('성별 코드 1자리를 숫자로 입력해주세요.');
+      showFieldError('verifyBirthError', '성별 코드 1자리를 숫자로 입력해주세요.');
+      return;
+    }
+    var mid = document.getElementById('verifyPhoneMid').value.trim();
+    var last = document.getElementById('verifyPhoneLast').value.trim();
+    if (!mid || !last) {
+      showFieldError('verifyPhoneError', '휴대폰 번호를 입력해주세요.');
       return;
     }
     if (!/^\d{3,4}$/.test(mid) || !/^\d{4}$/.test(last)) {
-      showVerifyError('휴대폰 번호를 숫자로 정확히 입력해주세요.');
+      showFieldError('verifyPhoneError', '휴대폰 번호를 숫자로 정확히 입력해주세요.');
       return;
     }
-    errorEl.style.display = 'none';
     document.getElementById('verifyDoneModal').style.display = 'flex';
   });
 
