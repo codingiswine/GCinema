@@ -129,7 +129,14 @@ a.verify-method-card:hover { border-color: #0f6e8c; }
 .verify-field { margin-bottom: 14px; }
 .verify-field label { display: block; font-size: 0.85rem; color: #555; margin-bottom: 4px; }
 .verify-field-row { display: flex; gap: 6px; align-items: center; }
-.verify-phone-row select, .verify-phone-row input[type="text"] { flex: 1; min-width: 0; }
+/* select는 flex:1 + min-width:0 만으로는 옵션 텍스트 길이만큼의 최소
+   내용 너비를 그대로 유지해 input과 폭이 안 맞는 경우가 있어(브라우저
+   기본 동작), 네 칸 모두 같은 폭을 갖도록 grid 트랙 크기를 강제한다. */
+.verify-phone-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) auto minmax(0, 1fr);
+}
+.verify-phone-row select, .verify-phone-row input[type="text"] { width: 100%; min-width: 0; }
 .verify-gender-digit { flex: none !important; width: 32px; text-align: center; }
 .verify-masked-digits { letter-spacing: 2px; color: #999; }
 .verify-legal-note { font-size: 0.78rem; color: #999; margin: 4px 0 18px; }
