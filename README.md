@@ -60,12 +60,16 @@ src/
     auth.ts          # 로그인 필요 라우트 가드 (requireLogin)
     asyncHandler.ts  # async 라우트 핸들러의 예외를 next(err)로 전달하는 래퍼
   routes/
-    auth.ts          # 회원가입 / 아이디 중복확인 / 로그인 / 로그아웃
+    auth.ts          # 회원가입 / 아이디 중복확인 / 로그인 / 로그아웃 / 모의 본인인증(회원가입) / 아이디 찾기 / 비밀번호 찾기
     movies.ts        # 영화 목록 / 상세 / 상영시간표 / 좋아요 / 평점·한줄평·영화일기 저장
     bookings.ts      # 좌석 조회 / 결제 페이지 / 결제 / 예매 완료 / 마이페이지 / 예매 취소
   views/
     partials/{head,nav,footer}.ejs  # 공통 head, GCinema 브랜드 헤더, 하단 주소 푸터
     signup.ejs, login.ejs           # 회원가입(아이디 중복확인, 분할 입력 UI) / 로그인
+    signupVerify.ejs, signupVerifyPhone.ejs  # 회원가입 전 모의 본인인증(방법 선택 → 휴대폰 인증)
+    findId.ejs, findIdVerifyPhone.ejs, findIdResult.ejs        # 아이디 찾기(방법 선택 → 휴대폰 인증 → 결과)
+    resetPasswordFindId.ejs, resetPasswordMethod.ejs,
+    resetPasswordVerifyPhone.ejs, resetPasswordNew.ejs         # 비밀번호 찾기(아이디 확인 → 방법 선택 → 휴대폰 인증 → 새 비밀번호)
     movies.ejs, movie.ejs           # 포스터 카드 목록 / 통합 상영시간표(영화·날짜 전환)
     movieDetail.ejs                 # 영화 상세 설명(포스터 클릭 시 진입)
     showtimeSeats.ejs               # SCREEN 바 + 좌석 그리드 + 결제 전 확인 팝업
@@ -73,6 +77,7 @@ src/
     bookingComplete.ejs             # 결제 완료(예매번호 발급) 화면
     bookings.ejs                    # 마이페이지 5개 탭(내가 본 영화·결제내역·영화일기·1:1문의·정보관리)
     support.ejs                     # 고객센터 FAQ
+    error.ejs                       # 공용 404/500 화면
   public/
     style.css          # 전체 스타일
     gc-mark.png        # 헤더 로고 마크
