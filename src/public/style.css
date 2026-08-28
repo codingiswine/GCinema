@@ -143,7 +143,7 @@ a.verify-method-card:hover { border-color: #0f6e8c; }
 .verify-actions { display: flex; gap: 10px; }
 .verify-actions button { flex: 1; }
 form { display: flex; flex-direction: column; gap: 10px; max-width: 320px; }
-input, button {
+input, select, button {
   padding: 8px 10px;
   font-size: 1rem;
   border-radius: 6px;

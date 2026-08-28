@@ -75,6 +75,19 @@
   </div>
 </div>
 
+<!-- 만 14세 미만 가입 차단 안내 팝업 -->
+<div id="underAgeModal" class="modal-overlay" style="display:none;">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span>알림</span>
+    </div>
+    <div class="modal-body">
+      <p>만 14세 미만 아동: 개인정보보호법에 따라 회원가입 시 반드시 법정대리인(부모님 등)의 동의 및 본인인증 절차를 거쳐야 가입이 완료됩니다.</p>
+    </div>
+    <button type="button" class="modal-confirm" id="underAgeConfirmBtn">확인</button>
+  </div>
+</div>
+
 <script>
   document.getElementById('verifyCancelBtn').addEventListener('click', function () {
     window.location.href = '/signup/verify';
@@ -146,6 +159,24 @@
       showFieldError('verifyBirthError', '제대로된 생년월일/성별을 입력해주세요.');
       return;
     }
+    // 성별 코드 앞자리로 세기를 가려 만 나이를 계산한다. 만 14세 미만은
+    // 개인정보보호법상 법정대리인 동의가 필요해 이 화면에서는 가입시키지 않는다.
+    var century = (genderDigit === '1' || genderDigit === '2') ? 1900 : 2000;
+    var birthDate = new Date(
+      century + Number(birth.slice(0, 2)),
+      Number(birth.slice(2, 4)) - 1,
+      Number(birth.slice(4, 6))
+    );
+    var today = new Date();
+    var age = today.getFullYear() - birthDate.getFullYear();
+    var hadBirthdayThisYear =
+      today.getMonth() > birthDate.getMonth() ||
+      (today.getMonth() === birthDate.getMonth() && today.getDate() >= birthDate.getDate());
+    if (!hadBirthdayThisYear) age -= 1;
+    if (age < 14) {
+      document.getElementById('underAgeModal').style.display = 'flex';
+      return;
+    }
     var mid = document.getElementById('verifyPhoneMid').value.trim();
     var last = document.getElementById('verifyPhoneLast').value.trim();
     if (!mid || !last) {
@@ -161,6 +192,10 @@
 
   document.getElementById('verifyDoneConfirmBtn').addEventListener('click', function () {
     window.location.href = '/signup';
+  });
+
+  document.getElementById('underAgeConfirmBtn').addEventListener('click', function () {
+    document.getElementById('underAgeModal').style.display = 'none';
   });
 </script>
 <%- include('partials/footer') %>
