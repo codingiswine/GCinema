@@ -19,6 +19,11 @@ export const CANCEL_POLICY = [
   '현장 취소 시 영화 상영시간 이전까지만 가능합니다.',
 ];
 
+// 위 CANCEL_POLICY[0]이 실제로 지켜지도록, 취소 요청 시점의 상영시간까지
+// 남은 시간을 서버에서 직접 대조한다. 화면에서만 막으면 API를 직접 호출해
+// 20분 이내에도 온라인 취소가 가능해지므로 여기서도 확인해야 한다.
+const ONLINE_CANCEL_CUTOFF_MS = 20 * 60 * 1000;
+
 // 사람이 읽고 부를 수 있는 길이의 예매번호. 한 번의 결제로 잡힌 좌석들이 공유한다.
 function makeReservationNo(): string {
   const d = new Date();
@@ -403,9 +408,12 @@ bookingsRouter.get('/bookings', requireLogin, asyncHandler(async (req, res) => {
 
 bookingsRouter.post('/bookings/:id/cancel', requireLogin, asyncHandler(async (req, res) => {
   const bookingId = Number(req.params.id);
-  const booking = await prisma.booking.findUnique({ where: { id: bookingId } });
+  const booking = await prisma.booking.findUnique({ where: { id: bookingId }, include: { showtime: true } });
   if (!booking || booking.userId !== req.session.userId || booking.cancelledAt) {
     return res.status(404).json({ error: '예매 내역을 찾을 수 없습니다.' });
+  }
+  if (booking.showtime.startAt.getTime() - Date.now() < ONLINE_CANCEL_CUTOFF_MS) {
+    return res.status(400).json({ error: '영화 상영시간 20분 전까지만 온라인 취소가 가능합니다. 이후에는 현장에서 취소해주세요.' });
   }
   // 행을 지우지 않고 cancelledAt만 채운다 — 취소 이력을 남겨 고객 관리·
   // 마케팅 분석(취소율, 재예매 패턴 등)에 쓸 수 있게 하기 위함. 같은

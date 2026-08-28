@@ -67,6 +67,7 @@ describe('booking flow', () => {
   let priorityShowtimeId: number;
   let morningShowtimeId: number;
   let lateNightShowtimeId: number;
+  let soonShowtimeId: number;
 
   beforeAll(async () => {
     const movie = await prisma.movie.create({
@@ -116,6 +117,11 @@ describe('booking flow', () => {
       data: { movieId, theaterName: '1관', startAt: lateNightBandTime(), totalSeats: 4, cols: 2 },
     });
     lateNightShowtimeId = lateNightShowtime.id;
+    // 온라인 취소 20분 컷오프 테스트 전용 — 지금부터 10분 뒤 시작.
+    const soonShowtime = await prisma.showtime.create({
+      data: { movieId, theaterName: '1관', startAt: new Date(Date.now() + 10 * 60 * 1000), totalSeats: 4, cols: 2 },
+    });
+    soonShowtimeId = soonShowtime.id;
   });
 
   afterAll(async () => {
@@ -127,6 +133,7 @@ describe('booking flow', () => {
       priorityShowtimeId,
       morningShowtimeId,
       lateNightShowtimeId,
+      soonShowtimeId,
     ];
     await prisma.movieReview.deleteMany({ where: { movieId } });
     await prisma.checkoutAttempt.deleteMany({ where: { showtimeId: { in: showtimeIds } } });
@@ -701,6 +708,28 @@ describe('booking flow', () => {
       disabledCount: 0,
     });
     expect(rebook.status).toBe(302);
+  });
+
+  test('상영시간이 20분 미만 남은 예매는 온라인으로 취소할 수 없다', async () => {
+    const username = `user1${rand()}`;
+    const agent = request.agent(app);
+    await signup(username);
+    await agent.post('/login').send({ username, password: VALID_PASSWORD });
+    await book(agent, soonShowtimeId, {
+      seats: ['A1'],
+      adultCount: 1,
+      teenCount: 0,
+      seniorCount: 0,
+      disabledCount: 0,
+    });
+    const booking = await prisma.booking.findFirst({ where: { showtimeId: soonShowtimeId, seatLabel: 'A1' } });
+
+    const res = await agent.post(`/bookings/${booking!.id}/cancel`);
+    expect(res.status).toBe(400);
+    expect(res.body.error).toContain('20분');
+
+    const stillActive = await prisma.booking.findUnique({ where: { id: booking!.id } });
+    expect(stillActive!.cancelledAt).toBeNull();
   });
 
   test('취소한 예매는 예매 내역 목록에 더 이상 보이지 않는다', async () => {

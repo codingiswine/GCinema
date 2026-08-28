@@ -110,6 +110,8 @@
   document.querySelectorAll('.booking-cancel-btn').forEach(function (btn) {
     btn.addEventListener('click', function () {
       cancelTargetId = btn.dataset.bookingId;
+      document.querySelector('#cancelModal .modal-body p').textContent = '예매 취소 하시겠습니까?';
+      document.getElementById('cancelConfirmBtn').style.display = '';
       document.getElementById('cancelModal').style.display = 'flex';
     });
   });
@@ -119,7 +121,16 @@
     cancelConfirmBtn.addEventListener('click', function () {
       if (!cancelTargetId) return;
       fetch('/bookings/' + cancelTargetId + '/cancel', { method: 'POST' })
-        .then(function () { window.location.reload(); });
+        .then(function (res) {
+          if (res.ok) {
+            window.location.reload();
+            return;
+          }
+          return res.json().then(function (data) {
+            document.querySelector('#cancelModal .modal-body p').textContent = data.error || '취소에 실패했습니다.';
+            cancelConfirmBtn.style.display = 'none';
+          });
+        });
     });
   }
 
