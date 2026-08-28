@@ -47,6 +47,107 @@ npm run build       # tsc 타입 체크
 7. 예매 완료 화면에서 예매번호 확인 → `/bookings`(마이페이지) "결제내역 > 예매내역"에서 확인, 예매 취소 버튼으로 취소하면 "취소내역" 탭으로 옮겨감
 8. (`gcinema`로 로그인 시) 마이페이지 "내가 본 영화"에서 관람한 영화에 5점 만점 평점·한 줄 평을 남기고, "나의 영화일기"의 일기쓰기 버튼으로 감상을 기록
 
+## 아키텍처
+
+브라우저와 서버 사이에 별도 API 레이어나 클라이언트 상태 관리가 없는 단순한 3계층 구조입니다. 모든 화면은 서버에서 EJS로 렌더링된 완성된 HTML로 내려가고, 로그인 상태는 세션 쿠키 하나로만 유지됩니다.
+
+```mermaid
+flowchart LR
+  Browser["브라우저<br/>(EJS 렌더링 화면)"]
+
+  subgraph Server["Express 서버 (TypeScript)"]
+    direction TB
+    Routes["routes/<br/>auth · movies · bookings"]
+    MW["middleware/<br/>requireLogin · asyncHandler"]
+    Session["express-session<br/>(세션 쿠키)"]
+  end
+
+  Prisma["Prisma Client"]
+  DB[("PostgreSQL<br/>(Docker)")]
+
+  Browser -- "요청 / 폼 제출" --> Routes
+  Routes --> MW
+  Routes -- "로그인 상태 조회·기록" --> Session
+  Routes -- "쿼리" --> Prisma
+  Prisma --> DB
+  Routes -- "렌더링된 HTML" --> Browser
+```
+
+## ERD
+
+`prisma/schema.prisma`의 7개 모델과 관계입니다. `Seat` 테이블이 없는 이유(좌석 상태를 `Showtime.totalSeats`/`cols` + `Booking` 조회로 계산)는 아래 "설계 의도"에 있습니다.
+
+```mermaid
+erDiagram
+  USER ||--o{ BOOKING : "예매"
+  USER ||--o{ MOVIE_LIKE : "좋아요"
+  USER ||--o{ CHECKOUT_ATTEMPT : "결제시도"
+  USER ||--o{ MOVIE_REVIEW : "후기"
+  MOVIE ||--o{ SHOWTIME : "상영"
+  MOVIE ||--o{ MOVIE_LIKE : ""
+  MOVIE ||--o{ MOVIE_REVIEW : ""
+  SHOWTIME ||--o{ BOOKING : ""
+  SHOWTIME ||--o{ CHECKOUT_ATTEMPT : ""
+
+  USER {
+    int id PK
+    string username UK
+    string email UK
+    string phone UK
+    string passwordHash
+  }
+  MOVIE {
+    int id PK
+    string title
+    string genre
+    int runningTimeMin
+    string ageRating
+    int satisfactionPercent
+    float bookingRatePercent
+    string cumulativeViewers
+  }
+  SHOWTIME {
+    int id PK
+    int movieId FK
+    string theaterName
+    datetime startAt
+    int totalSeats
+    int cols
+  }
+  BOOKING {
+    int id PK
+    int userId FK
+    int showtimeId FK
+    string seatLabel
+    string category
+    int price
+    string reservationNo
+    string paymentMethod
+    datetime cancelledAt
+  }
+  MOVIE_LIKE {
+    int id PK
+    int userId FK
+    int movieId FK
+  }
+  CHECKOUT_ATTEMPT {
+    int id PK
+    int userId FK
+    int showtimeId FK
+    string seats
+    int totalPrice
+    datetime completedAt
+  }
+  MOVIE_REVIEW {
+    int id PK
+    int userId FK
+    int movieId FK
+    int rating
+    string comment
+    string diary
+  }
+```
+
 ## 프로젝트 구조
 ```
 prisma/
